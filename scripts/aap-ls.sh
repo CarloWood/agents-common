@@ -29,7 +29,8 @@ PLANROOT="${PLANROOT:-$PWD}"
 OBJECTIVE_TREE="${PLANROOT%/}/ObjectiveTree"
 CURRENT_OBJECTIVE_LINK="${PLANROOT%/}/current_objective"
 
-warn() { printf 'WARNING: %s\n' "$*" >&2; }
+notice() { printf '%b%s\n' $'\e[36mNOTICE:\e[0m ' "$*"; }
+warn() { printf '%b%s\n' $'\e[31mWARNING:\e[0m ' "$*" >&2; }
 die() { printf 'ERROR: %s\n' "$*" >&2; exit 1; }
 
 rel_to_planroot() {
@@ -207,7 +208,7 @@ if (( current_link_exists )); then
       ln -snf -- "$(rel_to_planroot "$first_not_achieved_leaf")" "$CURRENT_OBJECTIVE_LINK"
       current_target_abs="$(readlink -f -- "$CURRENT_OBJECTIVE_LINK")"
       desired_current="$current_target_abs"
-      printf 'Updated current_objective to point to %s.\n' "$(basename -- "$first_not_achieved_leaf")"
+      notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
     else
       warn "current_objective exists but is broken."
       desired_current="$first_not_achieved_leaf"
@@ -228,20 +229,20 @@ if (( current_link_exists )); then
       if (( eligible )); then
         desired_current="$current_target_abs"
         if [[ "$(readlink -f -- "$first_not_achieved_leaf")" != "$current_target_abs" ]]; then
-          printf 'First not-achieved objective %s\n' "$found_first_rel"
+          notice "First not-achieved objective $found_first_rel"
         fi
       else
         if [[ "$current_status" == "achieved" ]]; then
           ln -snf -- "$(rel_to_planroot "$first_not_achieved_leaf")" "$CURRENT_OBJECTIVE_LINK"
           current_target_abs="$(readlink -f -- "$CURRENT_OBJECTIVE_LINK")"
           desired_current="$current_target_abs"
-          printf 'Updated current_objective to point to %s.\n' "$(basename -- "$first_not_achieved_leaf")"
+          notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
         else
           warn "current_objective points to an internal node or non-leaf objective; updating to first not-achieved leaf objective."
           ln -snf -- "$(rel_to_planroot "$first_not_achieved_leaf")" "$CURRENT_OBJECTIVE_LINK"
           current_target_abs="$(readlink -f -- "$CURRENT_OBJECTIVE_LINK")"
           desired_current="$current_target_abs"
-          printf 'Updated current_objective to point to %s.\n' "$(basename -- "$first_not_achieved_leaf")"
+          notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
         fi
       fi
     else
@@ -250,7 +251,7 @@ if (( current_link_exists )); then
       desired_current="$current_target_abs"
       if (( eligible )); then
         if [[ "$(readlink -f -- "$first_not_achieved_leaf")" != "$current_target_abs" ]]; then
-          printf 'First not-achieved objective %s\n' "$found_first_rel"
+          notice "First not-achieved objective $found_first_rel"
         fi
       else
         if [[ "$current_status" == "achieved" ]]; then
