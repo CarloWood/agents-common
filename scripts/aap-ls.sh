@@ -54,7 +54,7 @@ list_goal_dirs() {
   local entry
   while IFS= read -r -d '' entry; do
     children+=("$entry")
-  done < <(find "$node" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null | sort -z)
+  done < <(find "$node" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null | LC_ALL=C sort -z)
   local child
   for child in "${children[@]}"; do
     if is_goal_dir "$child"; then
