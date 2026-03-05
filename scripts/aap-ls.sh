@@ -303,7 +303,7 @@ while IFS= read -r -d '' child; do
   child_rel="$(rel_to_planroot "$child")"
   if [[ "$child_rel" == "$current_rel" ]]; then
     if [[ "$(read_status "$child")" == "achieved" ]]; then
-      printf '%b%s\n' $'  *\e[32m🗸\e[0m ' "$child_name"
+      printf '%b%s\n' $' *\e[32m🗸\e[0m ' "$child_name"
     else
       printf '  * %s\n' "$child_name"
     fi
