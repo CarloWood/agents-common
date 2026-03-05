@@ -186,7 +186,7 @@ if (( current_link_exists )); then
     if [[ -n "$current_target_abs" ]]; then
       if [[ "$(read_status "$CURRENT_OBJECTIVE_LINK")" == "not-achieved" ]]; then
         desired_current="$current_target_abs"
-        if [[ "$(realpath "$first_not_achieved")" != "$current_target_abs" ]]; then
+        if [[ "$(readlink -f -- "$first_not_achieved")" != "$current_target_abs" ]]; then
           printf 'First not-achieved objective %s\n' "$found_first_rel"
         fi
       fi
