@@ -253,7 +253,16 @@ if [[ "$current_node_abs" == "$OBJECTIVE_TREE_ABS" ]]; then
   parent_node_abs="$current_node_abs"
 fi
 
-printf 'Parent objective %s\n' "$(rel_to_planroot "$parent_node_abs")"
+parent_rel="$(rel_to_planroot "$parent_node_abs")"
+if [[ "$parent_rel" == "." ]]; then
+  parent_rel=""
+fi
+parent_display='$PLANROOT'
+if [[ -n "$parent_rel" ]]; then
+  parent_display+="/$parent_rel"
+fi
+parent_display+="/"
+printf 'Parent objective: %s\n' "$parent_display"
 
 current_rel="$(rel_to_planroot "$current_node_abs")"
 while IFS= read -r -d '' child; do
@@ -262,7 +271,11 @@ while IFS= read -r -d '' child; do
   if [[ "$child_rel" == "$current_rel" ]]; then
     printf '  * %s\n' "$child_name"
   else
-    printf '    %s\n' "$child_name"
+    if [[ "$(read_status "$child")" == "achieved" ]]; then
+      printf '%b%s\n' $'  \e[32m🗸\e[0m ' "$child_name"
+    else
+      printf '    %s\n' "$child_name"
+    fi
   fi
 done < <(list_goal_dirs "$parent_node_abs")
 
