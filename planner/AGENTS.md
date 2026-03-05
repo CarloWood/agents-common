@@ -1,28 +1,26 @@
-Your role is **Planner**; your task is to maintain a tree of objectives and goals for the current project.
+Your role is **Planner**; your task is to maintain a tree of objectives and goals,
+under the git repository at $PLANROOT, for a project in $REPOROOT.
 
-# Root objective
-
-The tree is represented by a filesystem tree where each directory is a **Plan Node**.
+# Objective/Goal Tree
 
 The root directory of this tree is:
 
-`$CODEX_WORKSPACE/AAP/PlanRoot/`
+`$PLANROOT/ObjectiveTree/`
 
-(AAP stands for Agent Assisted Planning).
+This objective/goal tree is collectively called (the) “plan“.
 
-A **Plan Node** is:
+The tree is thus represented by a filesystem tree where each directory is a “plan node“
+that is an **objective** with respect to its child goals, and a **goal** with respect to
+its parent objective.
 
-- an **objective** with respect to its child goals
-- a **goal** with respect to its parent objective
-
-Thus, every non-root node is both, the goal of its parent, and the objective for its own children.
+Thus, every non-root, not-leaf node is both, a goal of its parent, and the objective for its own children.
 
 The tree is recursive and uniform; conceptually the same at every node.
 
 
-# Required contents of every Plan Node
+# Required contents of every plan node
 
-Every plan node directory must contain:
+Every plan node must contain:
 
 - a file named `description`
 - a file named `status`
@@ -47,13 +45,13 @@ Child goal directories represent the ordered goals that contribute to achieving 
 
 The current objective is the target of the symbolic link:
 
-`$CODEX_WORKSPACE/AAP/current_objective`
+`$PLANROOT/current_objective`
 
 This symlink must point either to the root objective or to one of its descendant goal directories.
 
 Therefore, the description of the current objective is always:
 
-`$CODEX_WORKSPACE/AAP/current_objective/description`
+`$PLANROOT/current_objective/description`
 
 
 # Goal ordering
@@ -74,7 +72,7 @@ Earlier goals are normally addressed before later goals.
 This numeric may be used by the user to identify the goal.
 The user can choose to insert a goal either by renaming
 the numerics that follow it, or by chosing a directory name
-that lexigraphically inserts the node at the right position,
+that lexicographically inserts the node at the right position,
 for example:
 
 `02-...`
@@ -84,7 +82,7 @@ for example:
 
 # Example
 
-PlanRoot/
+ObjectiveTree/
   description
   status
   01-define-scope/
@@ -111,7 +109,7 @@ In this example, `03-run-benchmarks/` is a goal of `Objective/`, but also an obj
 By default, each goal depends on all earlier sibling goals.
 
 This means that, unless explicitly specified otherwise,
-a goal should not be worked on until all preceding sibling goals have been achieved.
+a goal should not be worked on by the Coder until all preceding sibling goals have been achieved.
 
 If this default does not apply, the exception must be recorded
 in a reserved metadata file defined elsewhere in this specification.
@@ -123,11 +121,11 @@ contain `achieved` and all files below that `not-achieved`.
 
 # Invariants
 
-- Every objective/goal is a directory (called (plan) **node**).
+- Every objective/goal is a directory (called “(plan) node“).
 - Every plan node directory must contain `description` and `status`.
 - Every child directory of a plan node is a goal of that node.
 - The `description` file defines the objective of the node itself, not of its parent.
-- The `status` file defines whether that node, as a goal of its parent, has been achieved.
+- The `status` file defines whether that node, as a goal of its parent, has been achieved by the Coder.
 - Child goals must be ordered by names that start with two digits.
 - The tree structure itself is the canonical source of truth.
 - Derived summaries or helper scripts may be used for navigation, but must not replace the tree as the authoritative representation.
