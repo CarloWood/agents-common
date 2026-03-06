@@ -105,9 +105,20 @@ EOF
     __aap_die "Invalid status transition: found 'achieved' after first 'not-achieved' at $(__aap_rel_to_planroot "$PLANROOT" "$transition_error")."
     exit 1
   fi
+
   if [[ -z "$first_not_achieved_leaf" ]]; then
-    __aap_die "No not-achieved leaf plan node found under $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")."
-    exit 1
+    if (( fix )); then
+      rm -f -- "$current_objective_link" 2>/dev/null || true
+    fi
+    __aap_notice "All goals have been achieved."
+    printf 'Parent objective: $PLANROOT/ObjectiveTree/\n'
+    local child
+    while IFS= read -r -d '' child; do
+      printf '%b%s\n' $'  \e[32m🗸\e[0m ' "$(basename -- "$child")"
+    done < <(__aap_list_goal_dirs "$objective_tree")
+    printf '*) current objective:\n'
+    printf '(all goals achieved)\n'
+    exit 0
   fi
 
   local desired_current="$first_not_achieved_leaf"
@@ -263,3 +274,142 @@ aap-ls() {
   __aap_ls_impl "$@"
 }
 
+__aap_done_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  if (( $# != 1 )); then
+    __aap_die "usage: aap-done <ref>"
+    exit 2
+  fi
+  local ref="$1"
+
+  local objective_tree="$PLANROOT/ObjectiveTree"
+  local current_objective_link="$PLANROOT/current_objective"
+
+  if [[ ! -d "$objective_tree" ]]; then
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")"
+    exit 1
+  fi
+
+  local border_leaf=""
+  if ! border_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
+    rm -f -- "$current_objective_link" 2>/dev/null || true
+    __aap_notice "All goals have been achieved."
+    exit 0
+  fi
+
+  if [[ ! -d "$border_leaf" ]]; then
+    __aap_die "First not-achieved objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$border_leaf")"
+    exit 1
+  fi
+  if ! __aap_is_leaf "$border_leaf"; then
+    __aap_die "First not-achieved objective is not a leaf: $(__aap_rel_to_planroot "$PLANROOT" "$border_leaf")"
+    exit 1
+  fi
+
+  local parent_abs
+  parent_abs="$(dirname -- "$border_leaf")"
+  if [[ "$(readlink -f -- "$border_leaf")" == "$(readlink -f -- "$objective_tree")" ]]; then
+    parent_abs="$border_leaf"
+  fi
+
+  local resolved
+  resolved="$(__aap_resolve_ref_in_parent "$PLANROOT" "$parent_abs" "$ref")"
+  if [[ "$(readlink -f -- "$resolved")" != "$(readlink -f -- "$border_leaf")" ]]; then
+    __aap_die "Ref '$ref' does not refer to the current border objective ($(basename -- "$border_leaf"))."
+    exit 1
+  fi
+
+  __aap_ensure_status "$PLANROOT" "$border_leaf" 1
+  __aap_write_status "$PLANROOT" "$border_leaf" achieved
+
+  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+
+  local next_leaf=""
+  if next_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
+    ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$next_leaf")" "$current_objective_link"
+    __aap_notice "Updated current_objective to point to $(basename -- "$next_leaf")."
+    exit 0
+  fi
+
+  rm -f -- "$current_objective_link"
+  __aap_notice "All goals have been achieved."
+)
+
+aap-done() {
+  __aap_done_impl "$@"
+}
+
+__aap_previous_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  if (( $# != 0 )); then
+    __aap_die "usage: aap-previous"
+    exit 2
+  fi
+
+  local objective_tree="$PLANROOT/ObjectiveTree"
+  local current_objective_link="$PLANROOT/current_objective"
+
+  if [[ ! -d "$objective_tree" ]]; then
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")"
+    exit 1
+  fi
+
+  local leaves=()
+  local leaf
+  while IFS= read -r -d '' leaf; do
+    leaves+=("$leaf")
+  done < <(__aap_list_leaf_nodes "$objective_tree")
+
+  if (( ${#leaves[@]} == 0 )); then
+    __aap_die "No leaf goals found under $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")."
+    exit 1
+  fi
+
+  local border_idx="${#leaves[@]}"
+  local border_leaf=""
+  if border_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
+    local i
+    for (( i=0; i<${#leaves[@]}; ++i )); do
+      if [[ "$(readlink -f -- "${leaves[i]}")" == "$(readlink -f -- "$border_leaf")" ]]; then
+        border_idx=$i
+        break
+      fi
+    done
+  fi
+
+  if (( border_idx == 0 )); then
+    __aap_notice "Already at the first goal."
+    exit 0
+  fi
+
+  local prev_leaf="${leaves[border_idx-1]}"
+
+  __aap_ensure_status "$PLANROOT" "$prev_leaf" 1
+  __aap_write_status "$PLANROOT" "$prev_leaf" not-achieved
+
+  local parent_abs
+  parent_abs="$(dirname -- "$prev_leaf")"
+  if [[ "$(readlink -f -- "$prev_leaf")" == "$(readlink -f -- "$objective_tree")" ]]; then
+    parent_abs="$prev_leaf"
+  fi
+  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+
+  ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$prev_leaf")" "$current_objective_link"
+  __aap_notice "Updated current_objective to point to $(basename -- "$prev_leaf")."
+)
+
+aap-previous() {
+  __aap_previous_impl "$@"
+}
