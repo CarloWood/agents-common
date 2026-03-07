@@ -110,11 +110,29 @@ EOF
 
   local current_link_exists=0
   local current_target_abs=""
+  local current_target_display=""
   if [[ -L "$current_objective_link" ]]; then
     current_link_exists=1
-    if ! current_target_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null)"; then
-      __aap_warn "current_objective exists but could not be resolved: $(__aap_rel_to_planroot "$PLANROOT" "$current_objective_link")"
+    local raw_target
+    raw_target="$(readlink -- "$current_objective_link" 2>/dev/null || true)"
+    if [[ -z "$raw_target" ]]; then
       current_target_abs=""
+      current_target_display="$(__aap_rel_to_planroot "$PLANROOT" "$current_objective_link")"
+    else
+      local candidate="$raw_target"
+      if [[ "$candidate" != /* ]]; then
+        candidate="$PLANROOT/$candidate"
+      fi
+      if [[ -d "$candidate" ]]; then
+        current_target_abs="$(readlink -f -- "$candidate" 2>/dev/null || true)"
+      else
+        current_target_abs=""
+      fi
+      if [[ "$raw_target" == /* ]]; then
+        current_target_display="$(__aap_rel_to_planroot "$PLANROOT" "$raw_target")"
+      else
+        current_target_display="$raw_target"
+      fi
     fi
   fi
 
@@ -128,12 +146,16 @@ EOF
 
     if (( ! link_ok )); then
       if (( fix )); then
-        __aap_warn "current_objective exists but is broken; updating to first not-achieved leaf objective."
+        if [[ -n "$current_target_display" ]]; then
+          __aap_warn_out "current_objective points to non-existent $current_target_display:"
+        else
+          __aap_warn_out "current_objective is broken:"
+        fi
         ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
         desired_current="$(readlink -f -- "$current_objective_link")"
         __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
       else
-        __aap_warn "current_objective exists but is broken."
+        __aap_warn_out "current_objective exists but is broken."
         desired_current="$first_not_achieved_leaf"
       fi
     else
@@ -162,12 +184,12 @@ EOF
         fi
       else
         if (( fix )); then
-          __aap_warn "current_objective points to an internal node; updating to first not-achieved leaf objective."
+          __aap_warn_out "current_objective points to an internal node; updating to first not-achieved leaf objective."
           ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
           desired_current="$(readlink -f -- "$current_objective_link")"
           __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
         else
-          __aap_warn "current_objective points to an internal node."
+          __aap_warn_out "current_objective points to an internal node."
           desired_current="$first_not_achieved_leaf"
         fi
       fi
@@ -178,7 +200,7 @@ EOF
       desired_current="$(readlink -f -- "$current_objective_link")"
       __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
     else
-      __aap_warn "current_objective symlink missing."
+      __aap_warn_out "current_objective symlink missing."
       desired_current="$first_not_achieved_leaf"
     fi
   fi

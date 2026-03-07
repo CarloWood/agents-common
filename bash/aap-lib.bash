@@ -6,6 +6,10 @@ __aap_warn() {
   printf '%b%s\n' $'\e[31mWARNING:\e[0m ' "$*" >&2
 }
 
+__aap_warn_out() {
+  printf '%b%s\n' $'\e[31mWARNING:\e[0m ' "$*"
+}
+
 __aap_die() {
   printf 'ERROR: %s\n' "$*" >&2
   return 1
