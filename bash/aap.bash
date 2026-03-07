@@ -54,9 +54,7 @@ EOF
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
 
-  local seen_not_achieved_leaf=0
   local first_not_achieved_leaf=""
-  local transition_error=""
 
   local stack=("$objective_tree")
   while (( ${#stack[@]} > 0 )); do
@@ -86,12 +84,6 @@ EOF
       if [[ -z "$first_not_achieved_leaf" && "$status" == "not-achieved" ]]; then
         first_not_achieved_leaf="$node"
       fi
-      if (( seen_not_achieved_leaf )) && [[ "$status" == "achieved" ]]; then
-        transition_error="$node"
-      fi
-      if [[ "$status" == "not-achieved" ]]; then
-        seen_not_achieved_leaf=1
-      fi
     fi
 
     # Push children in reverse so we visit them lexicographically depth-first.
@@ -100,11 +92,6 @@ EOF
       stack+=("${children[i]}")
     done
   done
-
-  if [[ -n "$transition_error" ]]; then
-    __aap_die "Invalid status transition: found 'achieved' after first 'not-achieved' at $(__aap_rel_to_planroot "$PLANROOT" "$transition_error")."
-    exit 1
-  fi
 
   if [[ -z "$first_not_achieved_leaf" ]]; then
     if (( fix )); then
@@ -121,8 +108,6 @@ EOF
     exit 0
   fi
 
-  local desired_current="$first_not_achieved_leaf"
-
   local current_link_exists=0
   local current_target_abs=""
   if [[ -L "$current_objective_link" ]]; then
@@ -133,8 +118,7 @@ EOF
     fi
   fi
 
-  local found_first_rel
-  found_first_rel="$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")"
+  local desired_current="$first_not_achieved_leaf"
 
   if (( current_link_exists )); then
     local link_ok=0
@@ -161,41 +145,30 @@ EOF
         current_is_leaf=0
       fi
 
-      local eligible=0
-      if [[ "$current_status" == "not-achieved" ]] && (( current_is_leaf )); then
-        eligible=1
-      fi
-
-      if (( fix )); then
-        if (( eligible )); then
-          desired_current="$current_target_abs"
-          if [[ "$(readlink -f -- "$first_not_achieved_leaf")" != "$current_target_abs" ]]; then
-            __aap_notice "First not-achieved objective $found_first_rel"
+      if (( current_is_leaf )); then
+        if (( fix )); then
+          if [[ "$current_status" == "not-achieved" ]]; then
+            desired_current="$current_target_abs"
+          else
+            ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+            desired_current="$(readlink -f -- "$current_objective_link")"
+            __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
           fi
         else
+          desired_current="$current_target_abs"
           if [[ "$current_status" == "achieved" ]]; then
-            ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
-            desired_current="$(readlink -f -- "$current_objective_link")"
-            __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
-          else
-            __aap_warn "current_objective points to an internal node or non-leaf objective; updating to first not-achieved leaf objective."
-            ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
-            desired_current="$(readlink -f -- "$current_objective_link")"
-            __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
+            __aap_warn "current_objective points to an achieved node."
           fi
         fi
       else
-        desired_current="$current_target_abs"
-        if (( eligible )); then
-          if [[ "$(readlink -f -- "$first_not_achieved_leaf")" != "$current_target_abs" ]]; then
-            __aap_notice "First not-achieved objective $found_first_rel"
-          fi
+        if (( fix )); then
+          __aap_warn "current_objective points to an internal node; updating to first not-achieved leaf objective."
+          ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+          desired_current="$(readlink -f -- "$current_objective_link")"
+          __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
         else
-          if [[ "$current_status" == "achieved" ]]; then
-            __aap_warn "current_objective points to an achieved node."
-          else
-            __aap_warn "current_objective points to an internal node or non-leaf objective."
-          fi
+          __aap_warn "current_objective points to an internal node."
+          desired_current="$first_not_achieved_leaf"
         fi
       fi
     fi
@@ -203,6 +176,7 @@ EOF
     if (( fix )); then
       ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
       desired_current="$(readlink -f -- "$current_objective_link")"
+      __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
     else
       __aap_warn "current_objective symlink missing."
       desired_current="$first_not_achieved_leaf"
@@ -296,37 +270,41 @@ __aap_done_impl() (
     exit 1
   fi
 
-  local border_leaf=""
-  if ! border_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
-    rm -f -- "$current_objective_link" 2>/dev/null || true
+  if [[ ! -L "$current_objective_link" ]]; then
     __aap_notice "All goals have been achieved."
     exit 0
   fi
 
-  if [[ ! -d "$border_leaf" ]]; then
-    __aap_die "First not-achieved objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$border_leaf")"
+  local current_abs
+  current_abs="$(readlink -f -- "$current_objective_link")"
+  if [[ ! -d "$current_abs" ]]; then
+    __aap_die "current_objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$current_abs")"
     exit 1
   fi
-  if ! __aap_is_leaf "$border_leaf"; then
-    __aap_die "First not-achieved objective is not a leaf: $(__aap_rel_to_planroot "$PLANROOT" "$border_leaf")"
+  if ! __aap_is_leaf "$current_abs"; then
+    __aap_die "current_objective is not a leaf objective: $(__aap_rel_to_planroot "$PLANROOT" "$current_abs")"
+    exit 1
+  fi
+
+  local current_status
+  current_status="$(__aap_read_status "$PLANROOT" "$current_abs")"
+  if [[ "$current_status" != "not-achieved" ]]; then
+    __aap_die "current objective is already achieved: $(basename -- "$current_abs")"
     exit 1
   fi
 
   local parent_abs
-  parent_abs="$(dirname -- "$border_leaf")"
-  if [[ "$(readlink -f -- "$border_leaf")" == "$(readlink -f -- "$objective_tree")" ]]; then
-    parent_abs="$border_leaf"
-  fi
+  parent_abs="$(dirname -- "$current_abs")"
 
   local resolved
   resolved="$(__aap_resolve_ref_in_parent "$PLANROOT" "$parent_abs" "$ref")"
-  if [[ "$(readlink -f -- "$resolved")" != "$(readlink -f -- "$border_leaf")" ]]; then
-    __aap_die "Ref '$ref' does not refer to the current border objective ($(basename -- "$border_leaf"))."
+  if [[ "$(readlink -f -- "$resolved")" != "$(readlink -f -- "$current_abs")" ]]; then
+    __aap_die "Ref '$ref' does not refer to the current objective ($(basename -- "$current_abs"))."
     exit 1
   fi
 
-  __aap_ensure_status "$PLANROOT" "$border_leaf" 1
-  __aap_write_status "$PLANROOT" "$border_leaf" achieved
+  __aap_ensure_status "$PLANROOT" "$current_abs" 1
+  __aap_write_status "$PLANROOT" "$current_abs" achieved
 
   __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
 
@@ -377,24 +355,27 @@ __aap_previous_impl() (
     exit 1
   fi
 
-  local border_idx="${#leaves[@]}"
-  local border_leaf=""
-  if border_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
+  local idx=${#leaves[@]}
+  local current_abs=""
+  if [[ -L "$current_objective_link" ]]; then
+    current_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null || true)"
+  fi
+  if [[ -n "$current_abs" && -d "$current_abs" ]] && __aap_is_leaf "$current_abs"; then
     local i
     for (( i=0; i<${#leaves[@]}; ++i )); do
-      if [[ "$(readlink -f -- "${leaves[i]}")" == "$(readlink -f -- "$border_leaf")" ]]; then
-        border_idx=$i
+      if [[ "$(readlink -f -- "${leaves[i]}")" == "$current_abs" ]]; then
+        idx=$i
         break
       fi
     done
   fi
 
-  if (( border_idx == 0 )); then
+  if (( idx == 0 )); then
     __aap_notice "Already at the first goal."
     exit 0
   fi
 
-  local prev_leaf="${leaves[border_idx-1]}"
+  local prev_leaf="${leaves[idx-1]}"
 
   __aap_ensure_status "$PLANROOT" "$prev_leaf" 1
   __aap_write_status "$PLANROOT" "$prev_leaf" not-achieved
@@ -412,4 +393,127 @@ __aap_previous_impl() (
 
 aap-previous() {
   __aap_previous_impl "$@"
+}
+
+__aap_insert_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  local parent_refpath=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --parent)
+        shift
+        if [[ $# -lt 1 ]]; then
+          __aap_die "usage: aap-insert [--parent <refpath>] <node>"
+          exit 2
+        fi
+        parent_refpath="$1"
+        shift
+        ;;
+      --help|-h)
+        cat <<'EOF'
+usage: aap-insert [--parent <refpath>] <node>
+
+Insert a new leaf goal node and set it as current_objective.
+
+The description is read from stdin (heredoc/piped input recommended). If stdin
+is a TTY, input is read until EOF (Ctrl-D).
+EOF
+        exit 0
+        ;;
+      --*) __aap_die "aap-insert: unknown option: $1"; exit 2 ;;
+      *) break ;;
+    esac
+  done
+
+  if (( $# != 1 )); then
+    __aap_die "usage: aap-insert [--parent <refpath>] <node>"
+    exit 2
+  fi
+
+  local node_name="$1"
+  if [[ "$node_name" == */* ]]; then
+    __aap_die "Node name must not contain '/': '$node_name'"
+    exit 2
+  fi
+  if ! __aap_goal_name_ok "$node_name"; then
+    __aap_die "Invalid node name '$node_name' (expected to match ^[0-9][0-9][^-]*-)."
+    exit 2
+  fi
+
+  local objective_tree="$PLANROOT/ObjectiveTree"
+  local current_objective_link="$PLANROOT/current_objective"
+
+  if [[ ! -d "$objective_tree" ]]; then
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")"
+    exit 1
+  fi
+
+  local current_abs=""
+  if [[ -L "$current_objective_link" ]]; then
+    current_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null || true)"
+  fi
+
+  local parent_abs=""
+  if [[ -n "$parent_refpath" ]]; then
+    parent_abs="$(__aap_resolve_refpath_parent "$PLANROOT" "$objective_tree" "$current_abs" "$parent_refpath")"
+  else
+    if [[ -z "$current_abs" || ! -d "$current_abs" ]]; then
+      __aap_die "current_objective is missing or broken; run aap-ls --fix or use aap-insert --parent /."
+      exit 1
+    fi
+    if ! __aap_is_leaf "$current_abs"; then
+      __aap_die "current_objective is not a leaf objective; run aap-ls --fix."
+      exit 1
+    fi
+    parent_abs="$(dirname -- "$current_abs")"
+    __aap_insert_position_ok "$PLANROOT" "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
+  fi
+
+  if [[ ! -d "$parent_abs" ]]; then
+    __aap_die "Resolved parent is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$parent_abs")"
+    exit 1
+  fi
+
+  __aap_token_unique_in_parent "$PLANROOT" "$parent_abs" "$node_name"
+
+  local new_dir="$parent_abs/$node_name"
+  if [[ -e "$new_dir" ]]; then
+    __aap_die "Node already exists: $(__aap_rel_to_planroot "$PLANROOT" "$new_dir")"
+    exit 1
+  fi
+
+  if [[ -t 0 ]]; then
+    printf 'Enter description for %s, then end with Ctrl-D:\n' "$node_name" >&2
+  fi
+
+  local desc
+  desc="$(cat)"
+  local desc_check="${desc//$'\r'/}"
+  if [[ -z "${desc_check//[[:space:]]/}" ]]; then
+    __aap_die "Empty description."
+    exit 1
+  fi
+
+  mkdir -p -- "$new_dir"
+  printf '%s' "$desc" >"$new_dir/description"
+  if [[ "$desc" != *$'\n' ]]; then
+    printf '\n' >>"$new_dir/description"
+  fi
+  printf 'not-achieved\n' >"$new_dir/status"
+
+  ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$new_dir")" "$current_objective_link"
+
+  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+
+  __aap_notice "Updated current_objective to point to $(basename -- "$new_dir")."
+)
+
+aap-insert() {
+  __aap_insert_impl "$@"
 }
