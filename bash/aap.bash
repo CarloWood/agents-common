@@ -615,7 +615,11 @@ aap-configure() {
 usage: aap-configure [cmake args...]
 
 EOF
-echo "Configure ${CODEX_REPOBASE} out-of-tree in \$BUILDDIR."
+    local project="${CODEX_REPOBASE:-${REPOBASE:-}}"
+    if [[ -z "$project" && -n "${REPOROOT:-}" ]]; then
+      project="$(basename -- "$REPOROOT")"
+    fi
+    echo "Configure ${project:-the project} out-of-tree in \$BUILDDIR."
     cat <<'EOF'
 
 Defaults:
@@ -651,6 +655,14 @@ aap-build() {
   if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     cat <<'EOF'
 usage: aap-build [cmake --build args...]
+
+EOF
+    local project="${CODEX_REPOBASE:-${REPOBASE:-}}"
+    if [[ -z "$project" && -n "${REPOROOT:-}" ]]; then
+      project="$(basename -- "$REPOROOT")"
+    fi
+    echo "Build ${project:-the project} in \$BUILDDIR (run aap-configure first)."
+    cat <<'EOF'
 
 Build in $BUILDDIR (run aap-configure first). Uses:
   cmake --build "$BUILDDIR" --parallel ${AAP_BUILD_JOBS:-$(nproc)}
