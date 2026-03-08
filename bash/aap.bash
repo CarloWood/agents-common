@@ -287,6 +287,15 @@ __aap_done_impl() (
     exit 2
   fi
   local ref="$1"
+  if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-done <ref>
+
+Mark the current objective as achieved (must match <ref>), then update
+$PLANROOT/current_objective to the lexicographically first not-achieved leaf.
+EOF
+    exit 0
+  fi
 
   local objective_tree="$PLANROOT/ObjectiveTree"
   local current_objective_link="$PLANROOT/current_objective"
@@ -346,6 +355,10 @@ __aap_done_impl() (
 )
 
 aap-done() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    __aap_done_impl --help
+    return 0
+  fi
   __aap_done_impl "$@"
 }
 
@@ -418,6 +431,15 @@ __aap_previous_impl() (
 )
 
 aap-previous() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-previous
+
+Move current_objective to the previous leaf goal (depth-first lexicographic
+order) and mark it not-achieved.
+EOF
+    return 0
+  fi
   __aap_previous_impl "$@"
 }
 
