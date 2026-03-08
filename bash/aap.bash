@@ -614,7 +614,9 @@ aap-configure() {
     cat <<'EOF'
 usage: aap-configure [cmake args...]
 
-Configure codex-sockettapd out-of-tree in $BUILDDIR.
+EOF
+echo "Configure ${CODEX_REPOBASE} out-of-tree in \$BUILDDIR."
+    cat <<'EOF'
 
 Defaults:
   -G ${AAP_GENERATOR:-Ninja}
