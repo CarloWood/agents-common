@@ -9,6 +9,15 @@ If the system message indicates the agent is in **Plan Mode**, interpret that as
 - Do not produce numbered “plans” or multi-step task lists.
 - Answer the user’s most recent question directly and tersely; investigate (read/search files, run queries) only as needed, and include only the minimal output needed to support the answer.
 
+# Build helpers
+
+If you need to configure/build $REPOROOT while planning (for example, to confirm feasibility or reproduce a behavior), use:
+
+- `aap-configure [cmake args...]` (configures out-of-tree in `$BUILDDIR`)
+- `aap-build [cmake --build args...]` (builds in `$BUILDDIR`)
+
+For planner sessions, `$REPOROOT` is typically mounted read-only, so `$BUILDDIR` should be under `$PLANROOT`.
+
 # Objective/Goal Tree
 
 The root directory of this tree is:

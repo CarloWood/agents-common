@@ -539,3 +539,96 @@ EOF
 aap-insert() {
   __aap_insert_impl "$@"
 }
+
+__aap_configure_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+  if [[ -z "${REPOROOT:-}" ]]; then
+    __aap_die "REPOROOT is not set."
+    exit 1
+  fi
+  if [[ -z "${BUILDDIR:-}" ]]; then
+    __aap_die "BUILDDIR is not set."
+    exit 1
+  fi
+
+  local build_type="${AAP_BUILD_TYPE:-Debug}"
+  local generator="${AAP_GENERATOR:-Ninja}"
+
+  local have_generator=0
+  local have_build_type=0
+  local arg
+  for arg in "$@"; do
+    case "$arg" in
+      -G|--generator) have_generator=1 ;;
+      -DCMAKE_BUILD_TYPE=*) have_build_type=1 ;;
+    esac
+  done
+
+  mkdir -p -- "$BUILDDIR"
+
+  local -a cmd=(cmake -S "$REPOROOT" -B "$BUILDDIR")
+  if (( ! have_generator )); then
+    cmd+=(-G "$generator")
+  fi
+  if (( ! have_build_type )); then
+    cmd+=("-DCMAKE_BUILD_TYPE=$build_type")
+  fi
+  cmd+=("$@")
+
+  "${cmd[@]}"
+)
+
+aap-configure() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-configure [cmake args...]
+
+Configure codex-sockettapd out-of-tree in $BUILDDIR (must be under $PLANROOT for
+planner sessions).
+
+Defaults:
+  -G ${AAP_GENERATOR:-Ninja}
+  -DCMAKE_BUILD_TYPE=${AAP_BUILD_TYPE:-Debug}
+EOF
+    return 0
+  fi
+  __aap_configure_impl "$@"
+}
+
+__aap_build_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+  if [[ -z "${BUILDDIR:-}" ]]; then
+    __aap_die "BUILDDIR is not set."
+    exit 1
+  fi
+
+  if [[ ! -d "$BUILDDIR" ]]; then
+    __aap_die "BUILDDIR does not exist: $BUILDDIR (run aap-configure first)"
+    exit 1
+  fi
+
+  cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}" "$@"
+)
+
+aap-build() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-build [cmake --build args...]
+
+Build in $BUILDDIR (run aap-configure first). Uses:
+  cmake --build "$BUILDDIR" --parallel ${AAP_BUILD_JOBS:-$(nproc)}
+EOF
+    return 0
+  fi
+  __aap_build_impl "$@"
+}
