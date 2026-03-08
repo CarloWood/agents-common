@@ -588,8 +588,7 @@ aap-configure() {
     cat <<'EOF'
 usage: aap-configure [cmake args...]
 
-Configure codex-sockettapd out-of-tree in $BUILDDIR (must be under $PLANROOT for
-planner sessions).
+Configure codex-sockettapd out-of-tree in $BUILDDIR.
 
 Defaults:
   -G ${AAP_GENERATOR:-Ninja}
