@@ -5,6 +5,7 @@ if [[ -z "${PLANROOT:-}" ]]; then
   return 1 2>/dev/null || exit 1
 fi
 
+# Source low-level helper and utility functions.
 __aap_lib="$PLANROOT/agents-common/bash/aap-lib.bash"
 if [[ ! -f "$__aap_lib" ]]; then
   echo "ERROR: $__aap_lib does not exist." >&2
@@ -12,6 +13,9 @@ if [[ ! -f "$__aap_lib" ]]; then
 fi
 source "$__aap_lib"
 
+# The implementations of `aap-*` commands are defined in a `set -euo pipefail` subshell.
+# That gives us “strict mode” without running the risk to permanently changing the caller’s environment.
+#
 __aap_ls_impl() (
   set -euo pipefail
 
