@@ -644,7 +644,7 @@ __aap_build_impl() (
   fi
 
   if [[ ! -d "$BUILDDIR" ]]; then
-    __aap_die "BUILDDIR does not exist: $BUILDDIR (run aap-configure first)"
+    __aap_die "\$BUILDDIR ($(abbreviate_path $BUILDDIR)) does not exist; first run aap-configure."
     exit 1
   fi
 
@@ -661,10 +661,9 @@ EOF
     if [[ -z "$project" && -n "${REPOROOT:-}" ]]; then
       project="$(basename -- "$REPOROOT")"
     fi
-    echo "Build ${project:-the project} in \$BUILDDIR (run aap-configure first)."
+    echo "Build ${project:-the project} in \$BUILDDIR."
     cat <<'EOF'
-
-Build in $BUILDDIR (run aap-configure first). Uses:
+Uses:
   cmake --build "$BUILDDIR" --parallel ${AAP_BUILD_JOBS:-$(nproc)}
 EOF
     return 0
