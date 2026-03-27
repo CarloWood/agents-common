@@ -670,3 +670,24 @@ EOF
   fi
   __aap_build_impl "$@"
 }
+
+__aap_analyst_list_impl (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  if [[ ! -r "${PLANROOT}/analyst/current/topics" ]]; then
+    echo "No Topic List current exists."
+    exit 0
+  fi
+
+  echo "Topic List:"
+  cat "${PLANROOT}/analyst/current/topics"
+)
+
+aap-analyst-list() {
+  __aap_analyst_list_impl "$@"
+}
