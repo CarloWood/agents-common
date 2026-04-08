@@ -45,7 +45,7 @@ Print an overview of the current AAP ObjectiveTree and (optionally) fix common
 problems to restore invariants.
 
 Options:
-  --fix     Apply fixes${default_fix}.
+  --fix     Apply LATEST MASTER fixes${default_fix}.
   --no-fix  Only report problems; do not modify the ObjectiveTree or symlinks${default_no_fix}.
   --help    Show this help.
 EOF
