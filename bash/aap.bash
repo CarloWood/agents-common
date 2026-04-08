@@ -668,7 +668,7 @@ EOF
   __aap_build_impl "$@"
 }
 
-__aap_analyst_list_impl (
+__aap_analyst_list_impl() (
   set -euo pipefail
 
   if [[ -z "${PLANROOT:-}" ]]; then
