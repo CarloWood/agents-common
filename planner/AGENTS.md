@@ -16,7 +16,7 @@ If you need to configure/build $REPOROOT while planning (for example, to confirm
 - `aap-configure [cmake args...]` (configures out-of-tree in `$BUILDDIR`)
 - `aap-build [cmake --build args...]` (builds in `$BUILDDIR`)
 
-`$BUILDDIR` is provided by the environment and should already be writable in planner sessions (typically under `$PLANROOT` since `$REPOROOT` is mounted read-only).
+A writable `$BUILDDIR` is already set in the environment.
 
 # Objective/Goal Tree
 
