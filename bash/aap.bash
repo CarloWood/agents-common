@@ -25,20 +25,28 @@ __aap_ls_impl() (
   fi
 
   local fix=1
+  local default_fix=
+  local default_no_fix=
+  if [[ $AICLI_MODE != "planner" ]]; then
+    fix=0
+    default_no_fix=" (default)"
+  else
+    default_fix=" (default)"
+  fi
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fix) fix=1; shift ;;
       --no-fix) fix=0; shift ;;
       --help|-h)
-        cat <<'EOF'
+        cat <<EOF
 usage: aap-ls [--fix|--no-fix] [--help]
 
 Print an overview of the current AAP ObjectiveTree and (optionally) fix common
 problems to restore invariants.
 
 Options:
-  --fix     Apply fixes (default).
-  --no-fix  Only report problems; do not modify the ObjectiveTree or symlinks.
+  --fix     Apply fixes${default_fix}.
+  --no-fix  Only report problems; do not modify the ObjectiveTree or symlinks${default_no_fix}.
   --help    Show this help.
 EOF
         exit 0
