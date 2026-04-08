@@ -55,6 +55,11 @@ EOF
     exit 1
   fi
 
+  if [[ $AICLI_MODE != "planner" && $fix -eq 1 ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-ls with the argument --fix: The PLANROOT is read-only!"
+    exit 1
+  fi
+
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
 
