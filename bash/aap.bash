@@ -586,6 +586,10 @@ __aap_configure_impl() (
     __aap_die "BUILDDIR is not set."
     exit 1
   fi
+  if [[ ! -d "$BUILDDIR" || ! -w "$BUILDDIR" ]]; then
+    __aap_die "BUILDDIR is not a writable directory."
+    exit 1
+  fi
 
   local build_type="${AAP_BUILD_TYPE:-Debug}"
   local generator="${AAP_GENERATOR:-Ninja}"
@@ -599,8 +603,6 @@ __aap_configure_impl() (
       -DCMAKE_BUILD_TYPE=*) have_build_type=1 ;;
     esac
   done
-
-  mkdir -p -- "$BUILDDIR"
 
   local -a cmd=(cmake -S "$REPOROOT" -B "$BUILDDIR")
   if (( ! have_generator )); then
