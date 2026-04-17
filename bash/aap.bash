@@ -59,7 +59,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_notice "No plan exists yet. Use `aap-bootstrap` to add the main objective."
+    __aap_notice 'No plan exists yet. Use `aap-bootstrap` to add the main objective.'
     exit 0
   fi
 
@@ -314,7 +314,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree"); Use `aap-bootstrap` to add the main objective."
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree");"' Use `aap-bootstrap` to add the main objective.'
     exit 0
   fi
 
