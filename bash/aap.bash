@@ -766,4 +766,7 @@ aap-bootstrap() {
   __aap_bootstrap_impl "$@"
 }
 
-declare -fx aap-build
+# Export all functions defined here, because the AI needs them and opencode only provides it with exported stuff :/.
+for func in $(declare -F | grep '^declare -f ' | sed -e 's/^declare -f //' | grep -E '^(aap-|__aap)'); do
+  declare -fx $func
+done
