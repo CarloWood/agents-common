@@ -372,10 +372,6 @@ EOF
 )
 
 aap-done() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    __aap_done_impl --help
-    return 0
-  fi
   __aap_done_impl "$@"
 }
 
@@ -389,6 +385,16 @@ __aap_previous_impl() (
   if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-previous! The 'coder' and 'planner' agents may run this, when explicitly told to."
     exit 1
+  fi
+  local ref="${1:-}"
+  if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-previous
+
+Move current_objective to the previous leaf goal (depth-first lexicographic
+order) and mark it not-achieved.
+EOF
+    exit 0
   fi
 
   if (( $# != 0 )); then
@@ -452,15 +458,6 @@ __aap_previous_impl() (
 )
 
 aap-previous() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    cat <<'EOF'
-usage: aap-previous
-
-Move current_objective to the previous leaf goal (depth-first lexicographic
-order) and mark it not-achieved.
-EOF
-    return 0
-  fi
   __aap_previous_impl "$@"
 }
 
@@ -614,6 +611,21 @@ __aap_configure_impl() (
     __aap_die "BUILDDIR is not a writable directory."
     exit 1
   fi
+  local ref="${1:-}"
+  if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-configure [cmake args...]
+
+EOF
+    echo "Configure $REPOBASE out-of-tree in \$BUILDDIR."
+    cat <<'EOF'
+
+Defaults:
+  -G ${AAP_GENERATOR:-Ninja}
+  -DCMAKE_BUILD_TYPE=${AAP_BUILD_TYPE:-Debug}
+EOF
+    exit 0
+  fi
 
   local build_type="${AAP_BUILD_TYPE:-Debug}"
   local generator="${AAP_GENERATOR:-Ninja}"
@@ -641,20 +653,6 @@ __aap_configure_impl() (
 )
 
 aap-configure() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    cat <<'EOF'
-usage: aap-configure [cmake args...]
-
-EOF
-    echo "Configure $REPOBASE out-of-tree in \$BUILDDIR."
-    cat <<'EOF'
-
-Defaults:
-  -G ${AAP_GENERATOR:-Ninja}
-  -DCMAKE_BUILD_TYPE=${AAP_BUILD_TYPE:-Debug}
-EOF
-    return 0
-  fi
   __aap_configure_impl "$@"
 }
 
@@ -669,7 +667,6 @@ __aap_build_impl() (
     __aap_die "BUILDDIR is not set."
     exit 1
   fi
-
   if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-build! This is a 'coder'-agent only function (although the 'planner' can run it too)."
     exit 1
@@ -679,12 +676,8 @@ __aap_build_impl() (
     __aap_die "\$BUILDDIR ($(abbreviate_path $BUILDDIR)) does not exist; first run aap-configure."
     exit 1
   fi
-
-  cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}" "$@"
-)
-
-aap-build() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+  local ref="${1:-}"
+  if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
     cat <<'EOF'
 usage: aap-build [cmake --build args...]
 
@@ -694,8 +687,13 @@ EOF
 Uses:
   cmake --build "$BUILDDIR" --parallel ${AAP_BUILD_JOBS:-$(nproc)}
 EOF
-    return 0
+    exit 0
   fi
+
+  cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}" "$@"
+)
+
+aap-build() {
   __aap_build_impl "$@"
 }
 
@@ -705,6 +703,18 @@ __aap_analyst_list_impl() (
   if [[ -z "${PLANROOT:-}" ]]; then
     __aap_die "PLANROOT is not set."
     exit 1
+  fi
+  local ref="${1:-}"
+  if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-analyst-list [--help]
+
+   Print the current analyst Topic List, if one exists.
+
+   Options:
+     --help  Show this help.
+EOF
+    exit 0
   fi
 
   if [[ ! -r "${PLANROOT}/analyst/current/topics" ]]; then
@@ -717,17 +727,6 @@ __aap_analyst_list_impl() (
 )
 
 aap-analyst-list() {
-  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
-    cat <<'EOF'
-usage: aap-analyst-list [--help]
-
-   Print the current analyst Topic List, if one exists.
-
-   Options:
-     --help  Show this help.
-EOF
-    return 0
-  fi
   __aap_analyst_list_impl "$@"
 }
 
