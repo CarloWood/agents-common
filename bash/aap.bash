@@ -717,6 +717,17 @@ __aap_analyst_list_impl() (
 )
 
 aap-analyst-list() {
+  if [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
+    cat <<'EOF'
+usage: aap-analyst-list [--help]
+
+   Print the current analyst Topic List, if one exists.
+
+   Options:
+     --help  Show this help.
+EOF
+    return 0
+  fi
   __aap_analyst_list_impl "$@"
 }
 
