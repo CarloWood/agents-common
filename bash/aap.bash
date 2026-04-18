@@ -765,3 +765,5 @@ EOF
 aap-bootstrap() {
   __aap_bootstrap_impl "$@"
 }
+
+declare -fx aap-build
