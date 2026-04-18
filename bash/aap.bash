@@ -739,7 +739,7 @@ __aap_bootstrap_impl() (
     exit 1
   fi
 
-  if [[ $AICLI_MODE != "planner" && $fix -eq 1 ]]; then
+  if [[ $AICLI_MODE != "planner" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-bootstrap! This is a 'planner'-agent only function."
     exit 1
   fi
