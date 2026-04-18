@@ -294,7 +294,7 @@ __aap_done_impl() (
     __aap_die "PLANROOT is not set."
     exit 1
   fi
-  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+  if [[ $AICLI_MODE != "planner" || $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-done! This is a 'coder'-agent only function (although the 'planner' may run it too when explicitly told to)."
     exit 1
   fi
@@ -386,7 +386,7 @@ __aap_previous_impl() (
     __aap_die "PLANROOT is not set."
     exit 1
   fi
-  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+  if [[ $AICLI_MODE != "planner" || $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-previous! The 'coder' and 'planner' agents may run this, when explicitly told to."
     exit 1
   fi
@@ -606,7 +606,7 @@ __aap_configure_impl() (
     __aap_die "BUILDDIR is not set."
     exit 1
   fi
-  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+  if [[ $AICLI_MODE != "planner" || $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-configure! This is a 'coder'-agent only function (although the 'planner' can run it too)."
     exit 1
   fi
@@ -670,7 +670,7 @@ __aap_build_impl() (
     exit 1
   fi
 
-  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+  if [[ $AICLI_MODE != "planner" || $AICLI_MODE != "coder" ]]; then
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-build! This is a 'coder'-agent only function (although the 'planner' can run it too)."
     exit 1
   fi
