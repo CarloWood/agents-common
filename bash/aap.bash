@@ -294,6 +294,10 @@ __aap_done_impl() (
     __aap_die "PLANROOT is not set."
     exit 1
   fi
+  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-done! This is a 'coder'-agent only function (although the 'planner' may run it too when explicitly told to)."
+    exit 1
+  fi
 
   if (( $# != 1 )); then
     __aap_die "usage: aap-done <ref>"
@@ -382,6 +386,10 @@ __aap_previous_impl() (
     __aap_die "PLANROOT is not set."
     exit 1
   fi
+  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-previous! The 'coder' and 'planner' agents may run this, when explicitly told to."
+    exit 1
+  fi
 
   if (( $# != 0 )); then
     __aap_die "usage: aap-previous"
@@ -461,6 +469,10 @@ __aap_insert_impl() (
 
   if [[ -z "${PLANROOT:-}" ]]; then
     __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+  if [[ $AICLI_MODE != "planner" ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-insert: The PLANROOT is read-only!"
     exit 1
   fi
 
@@ -594,6 +606,10 @@ __aap_configure_impl() (
     __aap_die "BUILDDIR is not set."
     exit 1
   fi
+  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-configure! This is a 'coder'-agent only function (although the 'planner' can run it too)."
+    exit 1
+  fi
   if [[ ! -d "$BUILDDIR" || ! -w "$BUILDDIR" ]]; then
     __aap_die "BUILDDIR is not a writable directory."
     exit 1
@@ -654,6 +670,11 @@ __aap_build_impl() (
     exit 1
   fi
 
+  if [[ $AICLI_MODE != "planner" && $AICLI_MODE != "coder" ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-build! This is a 'coder'-agent only function (although the 'planner' can run it too)."
+    exit 1
+  fi
+
   if [[ ! -d "$BUILDDIR" ]]; then
     __aap_die "\$BUILDDIR ($(abbreviate_path $BUILDDIR)) does not exist; first run aap-configure."
     exit 1
@@ -704,6 +725,11 @@ __aap_bootstrap_impl() (
 
   if [[ -z "${PLANROOT:-}" ]]; then
     __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  if [[ $AICLI_MODE != "planner" && $fix -eq 1 ]]; then
+    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-bootstrap! This is a 'planner'-agent only function."
     exit 1
   fi
 
