@@ -357,7 +357,9 @@ EOF
 
   if [[ $AICLI_MODE == "coder" ]]; then
     unset AICLI_MODE
-    /usr/bin/remountctl --help
+    remountctl rw ai-cli $REPOBASE-AAP
+    trap 'unset AICLI_MODE; remountctl ro ai-cli $REPOBASE-AAP' EXIT
+    export AICLI_MODE="coder"
   fi
 
   __aap_ensure_status "$PLANROOT" "$current_abs" 1
