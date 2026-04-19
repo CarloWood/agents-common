@@ -550,6 +550,15 @@ EOF
     __aap_insert_position_ok "$PLANROOT" "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
   fi
 
+  if [[ $parent_abs != "$PLANROOT/ObjectiveTree" && $parent_abs != "$PLANROOT/ObjectiveTree/"* ]]; then
+    if [[ $parent_abs == "$PLANROOT" ]]; then
+      __aap_die "Can not add a sibling to the current objective, which is the root objective. Use aap-insert --parent / to add a new objective into ObjectiveTree."
+      exit 1
+    fi
+    __aap_die "Resolved parent is outside ObjectiveTree: $(abbreviate_path $parent_abs)"
+    exit 1
+  fi
+
   if [[ ! -d "$parent_abs" ]]; then
     __aap_die "Resolved parent is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$parent_abs")"
     exit 1
