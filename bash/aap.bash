@@ -120,7 +120,7 @@ EOF
     while IFS= read -r -d '' child; do
       __aap_print_achieved "  " "$(basename -- "$child")"
     done < <(__aap_list_goal_dirs "$objective_tree")
-    printf '*) current objective:\n'
+    printf '@) current objective:\n'
     printf '(all goals achieved)\n'
     exit 0
   fi
@@ -268,7 +268,7 @@ EOF
       if [[ "$child_status" == "achieved" ]]; then
         __aap_print_achieved " @" "$child_name"
       else
-        printf '  * %s\n' "$child_name"
+        printf '  @ %s\n' "$child_name"
       fi
     else
       if [[ "$child_status" == "achieved" ]]; then
@@ -279,7 +279,7 @@ EOF
     fi
   done < <(__aap_list_goal_dirs "$parent_node_abs")
 
-  printf '*) current objective:\n'
+  printf '@) current objective:\n'
   cat -- "$current_node_abs/description"
 )
 

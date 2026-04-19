@@ -510,5 +510,9 @@ __aap_token_unique_in_parent() {
 __aap_print_achieved() {
   local prefix="$1"
   local child_name="$2"
-  printf '%s%b%s\n' "$prefix" $'\e[32m🗸\e[0m ' "$child_name"
+  if [[ $AICLI_MODE == "shell" ]]; then
+    printf '%s%b%s\n' "$prefix" $'\e[32m🗸\e[0m ' "$child_name"
+  else
+    printf '%sv %s\n' "$prefix" "$child_name"
+  fi
 }
