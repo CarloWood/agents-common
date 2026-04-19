@@ -355,6 +355,11 @@ EOF
     exit 1
   fi
 
+  if [[ $AICLI_MODE == "coder" ]]; then
+    unset AICLI_MODE
+    /usr/bin/remountctl --help
+  fi
+
   __aap_ensure_status "$PLANROOT" "$current_abs" 1
   __aap_write_status "$PLANROOT" "$current_abs" achieved
 
