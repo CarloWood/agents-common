@@ -357,8 +357,8 @@ EOF
 
   if [[ $AICLI_MODE == "coder" ]]; then
     unset AICLI_MODE
-    remountctl rw ai-cli $REPOBASE-AAP
-    trap 'unset AICLI_MODE; remountctl ro ai-cli $REPOBASE-AAP' EXIT
+    remountctl rw ai-cli "/${REPOBASE}-AAP"
+    trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
     export AICLI_MODE="coder"
   fi
 
