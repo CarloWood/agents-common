@@ -584,10 +584,6 @@ EOF
     exit 1
   fi
 
-  echo "*** parent_abs = \"$parent_abs\" ***"
-  echo "*** new_dir = \"$new_dir\" ***"
-  exit 0
-
   mkdir -p -- "$new_dir"
   printf '%s' "$desc" >"$new_dir/description"
   if [[ "$desc" != *$'\n' ]]; then
