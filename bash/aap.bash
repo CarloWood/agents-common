@@ -450,6 +450,13 @@ EOF
 
   local prev_leaf="${leaves[idx-1]}"
 
+  if [[ $AICLI_MODE == "coder" ]]; then
+    unset AICLI_MODE
+    remountctl rw ai-cli "/${REPOBASE}-AAP"
+    trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
+    export AICLI_MODE="coder"
+  fi
+
   __aap_ensure_status "$PLANROOT" "$prev_leaf" 1
   __aap_write_status "$PLANROOT" "$prev_leaf" not-achieved
 
