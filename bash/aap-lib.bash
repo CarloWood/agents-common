@@ -506,3 +506,9 @@ __aap_token_unique_in_parent() {
     fi
   done < <(__aap_list_goal_dirs "$parent")
 }
+
+__aap_print_achieved() {
+  local prefix="$1"
+  local child_name="$2"
+  printf '%s%b%s\n' "$prefix" $'\e[32m🗸\e[0m ' "$child_name"
+}

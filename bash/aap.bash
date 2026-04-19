@@ -118,7 +118,7 @@ EOF
     printf 'Parent objective: $PLANROOT/ObjectiveTree/\n'
     local child
     while IFS= read -r -d '' child; do
-      printf '%b%s\n' $'  \e[32m🗸\e[0m ' "$(basename -- "$child")"
+      __aap_print_achieved "  " "$(basename -- "$child")"
     done < <(__aap_list_goal_dirs "$objective_tree")
     printf '*) current objective:\n'
     printf '(all goals achieved)\n'
@@ -266,13 +266,13 @@ EOF
 
     if [[ "$child_rel" == "$current_rel" ]]; then
       if [[ "$child_status" == "achieved" ]]; then
-        printf '%b%s\n' $' *\e[32m🗸\e[0m ' "$child_name"
+        __aap_print_achieved " @" "$child_name"
       else
         printf '  * %s\n' "$child_name"
       fi
     else
       if [[ "$child_status" == "achieved" ]]; then
-        printf '%b%s\n' $'  \e[32m🗸\e[0m ' "$child_name"
+        __aap_print_achieved "  " "$child_name"
       else
         printf '    %s\n' "$child_name"
       fi
