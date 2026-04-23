@@ -516,3 +516,8 @@ __aap_print_achieved() {
     printf '%sv %s\n' "$prefix" "$child_name"
   fi
 }
+
+__aap_is_user() {
+  local magic=$(echo "${OPENCODE_IS_USER_COMMAND:-}" | md5sum | awk '{ print $1 }')
+  [[ $magic == "9fad39ae375a33ff8d1e9d2a8af3f268" ]]
+}
