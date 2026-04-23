@@ -753,6 +753,63 @@ aap-analyst-list() {
   __aap_analyst_list_impl "$@"
 }
 
+__aap_analyst_update_topic_list_impl() (
+  set -euo pipefail
+
+  if [[ -z "${PLANROOT:-}" ]]; then
+    __aap_die "PLANROOT is not set."
+    exit 1
+  fi
+
+  if [[ $AICLI_MODE != "analyst" ]]; then
+    __aap_die "aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
+    exit 0
+  fi
+
+  if (( $# != 1 )); then
+    __aap_die "usage: aap-analyst-update-topic-list <text>"
+    exit 2
+  fi
+
+  local text="$1"
+  local topic_list
+  topic_list="$(printf '%s' "$text" | python3 - <<'PY'
+import re
+import sys
+
+text = sys.stdin.read()
+match = re.search(r'(?:^|\n)(Topic List\n[1-9][\s\S]*?)(?:\n\n|$)', text)
+if match:
+    sys.stdout.write(match.group(1))
+PY
+)"
+
+  if [[ -z "$topic_list" ]]; then
+    exit 0
+  fi
+
+  local current_link="$PLANROOT/analyst/current"
+  local topics_path="$current_link/topics"
+  if [[ -L "$current_link" || -d "$current_link" ]]; then
+    if [[ $AICLI_MODE == "analyst" ]]; then
+      unset AICLI_MODE
+      remountctl rw ai-cli "/${REPOBASE}-AAP"
+      trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
+      export AICLI_MODE="analyst"
+    fi
+
+    printf '%s' "$topic_list" > "$topics_path"
+    if [[ "$topic_list" != *$'\n' ]]; then
+      printf '\n' >> "$topics_path"
+    fi
+
+  fi
+)
+
+aap-analyst-update-topic-list() {
+  __aap_analyst_update_topic_list_impl "$@"
+}
+
 __aap_bootstrap_impl() (
   set -euo pipefail
 
