@@ -774,8 +774,8 @@ usage: aap-bootstrap
 
 Initialize PLANROOT with an initial objective, the main objective.
 
-Read description from stdin (heredoc/piped input recommended).
-If stdin is a TTY, input is read until EOF (Ctrl-D).
+The description is read from stdin (heredoc/piped input recommended). If stdin
+is a TTY, input is read until EOF (Ctrl-D).
 EOF
         exit 0
         ;;
