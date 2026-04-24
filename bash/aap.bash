@@ -785,10 +785,6 @@ if match:
 PY
 )"
 
-  if [[ -z "$topic_list" ]]; then
-    exit 4
-  fi
-
   local current_link="$PLANROOT/analyst/current"
   local topics_path="$current_link/topics"
   if [[ -L "$current_link" || -d "$current_link" ]]; then
