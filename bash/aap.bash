@@ -807,6 +807,30 @@ aap-analyst-update-topic-list() {
   __aap_analyst_update_topic_list_impl "$@"
 }
 
+__aap_analyst_all_done() (
+  if ! __aap_is_user; then
+    __aap_die "aap-analyst-all-done is a user-only command."
+    exit 1
+  fi
+
+  local current_link="$PLANROOT/analyst/current"
+  local topics_path="$current_link/topics"
+  if [[ -L "$current_link" || -d "$current_link" ]]; then
+    if [[ $AICLI_MODE == "analyst" || $AICLI_MODE == "coder" ]]; then
+      unset AICLI_MODE
+      remountctl rw ai-cli "/${REPOBASE}-AAP"
+      trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
+      export AICLI_MODE="analyst"
+    fi
+
+    printf '1. all done\n' > "$topics_path"
+  fi
+)
+
+aap-analyst-all-done() {
+  __aap_analyst_all_done
+}
+
 __aap_bootstrap_impl() (
   set -euo pipefail
 
