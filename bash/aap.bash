@@ -779,7 +779,7 @@ import re
 import sys
 
 text = sys.argv[1]
-match = re.search(r'(?:^|\n)(Topic List\n[1-9][\s\S]*?)(?:\n\n|$)', text)
+match = re.search(r'(?:^|\n)Topic List:?\n([1-9][\s\S]*?)(?:\n\n|$)', text)
 if match:
     sys.stdout.write(match.group(1))
 PY
