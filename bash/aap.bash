@@ -763,12 +763,12 @@ __aap_analyst_update_topic_list_impl() (
 
   if [[ $AICLI_MODE != "analyst" ]]; then
     __aap_die "AICLI_MODE='$AICLI_MODE'; aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
-    exit 0
+    exit 2
   fi
 
   if (( $# != 1 )); then
     __aap_die "usage: aap-analyst-update-topic-list <text>"
-    exit 2
+    exit 3
   fi
 
   local text="$1"
