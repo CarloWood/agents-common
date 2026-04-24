@@ -761,8 +761,9 @@ __aap_analyst_update_topic_list_impl() (
     exit 1
   fi
 
+  echo "AICLI_MODE='$AICLI_MODE'"
   if [[ $AICLI_MODE != "analyst" ]]; then
-    __aap_die "AICLI_MODE='$AICLI_MODE'; aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
+    __aap_die "aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
     exit 2
   fi
 
@@ -785,7 +786,7 @@ PY
 )"
 
   if [[ -z "$topic_list" ]]; then
-    exit 0
+    exit 4
   fi
 
   local current_link="$PLANROOT/analyst/current"
