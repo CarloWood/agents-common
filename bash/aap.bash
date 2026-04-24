@@ -51,7 +51,7 @@ Options:
 EOF
         exit 0
         ;;
-      *) echo "aap-ls: unknown argument: $1" >&2; exit 2 ;;
+      *) echo "aap-ls: unknown argument: $1" >&2; exit 1 ;;
     esac
   done
 
@@ -301,7 +301,7 @@ __aap_done_impl() (
 
   if (( $# != 1 )); then
     __aap_die "usage: aap-done <ref>"
-    exit 2
+    exit 1
   fi
   local ref="$1"
   if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
@@ -318,7 +318,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree");"' Use `aap-bootstrap` to add the main objective.'
+    __aap_notice "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree");"' Use `aap-bootstrap` to add the main objective.'
     exit 0
   fi
 
@@ -406,7 +406,7 @@ EOF
 
   if (( $# != 0 )); then
     __aap_die "usage: aap-previous"
-    exit 2
+    exit 1
   fi
 
   local objective_tree="$PLANROOT/ObjectiveTree"
@@ -494,7 +494,7 @@ __aap_insert_impl() (
         shift
         if [[ $# -lt 1 ]]; then
           __aap_die "usage: aap-insert [--parent <refpath>] <node>"
-          exit 2
+          exit 1
         fi
         parent_refpath="$1"
         shift
@@ -510,24 +510,24 @@ is a TTY, input is read until EOF (Ctrl-D).
 EOF
         exit 0
         ;;
-      --*) __aap_die "aap-insert: unknown option: $1"; exit 2 ;;
+      --*) __aap_die "aap-insert: unknown option: $1"; exit 1 ;;
       *) break ;;
     esac
   done
 
   if (( $# != 1 )); then
     __aap_die "usage: aap-insert [--parent <refpath>] <node>"
-    exit 2
+    exit 1
   fi
 
   local node_name="$1"
   if [[ "$node_name" == */* ]]; then
     __aap_die "Node name must not contain '/': '$node_name'"
-    exit 2
+    exit 1
   fi
   if ! __aap_goal_name_ok "$node_name"; then
     __aap_die "Invalid node name '$node_name' (expected to match ^[0-9][0-9][^-]*-)."
-    exit 2
+    exit 1
   fi
 
   local objective_tree="$PLANROOT/ObjectiveTree"
@@ -761,15 +761,15 @@ __aap_analyst_update_topic_list_impl() (
     exit 1
   fi
 
-  echo "AICLI_MODE='$AICLI_MODE'"
   if [[ $AICLI_MODE != "analyst" ]]; then
+    __aap_warning "AICLI_MODE='$AICLI_MODE'"
     __aap_die "aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
-    exit 2
+    exit 1
   fi
 
   if (( $# != 1 )); then
     __aap_die "usage: aap-analyst-update-topic-list <text>"
-    exit 3
+    exit 1
   fi
 
   local text="$1"
@@ -837,14 +837,14 @@ is a TTY, input is read until EOF (Ctrl-D).
 EOF
         exit 0
         ;;
-      --*) __aap_die "aap-bootstrap: unknown option: $1"; exit 2 ;;
+      --*) __aap_die "aap-bootstrap: unknown option: $1"; exit 1 ;;
       *) break ;;
     esac
   done
 
   if (( $# != 0 )); then
     __aap_die "usage: aap-bootstrap"
-    exit 2
+    exit 1
   fi
 
   local objective_tree="$PLANROOT/ObjectiveTree"
