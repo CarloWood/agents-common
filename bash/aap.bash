@@ -774,11 +774,11 @@ __aap_analyst_update_topic_list_impl() (
 
   local text="$1"
   local topic_list
-  topic_list="$(printf '%s' "$text" | python3 - <<'PY'
+  topic_list="$(python3 - "$text" <<'PY'
 import re
 import sys
 
-text = sys.stdin.read()
+text = sys.argv[1]
 match = re.search(r'(?:^|\n)(Topic List\n[1-9][\s\S]*?)(?:\n\n|$)', text)
 if match:
     sys.stdout.write(match.group(1))
