@@ -14,7 +14,7 @@ function __aap_load()
   local command
 
   # Source AAP commands.
-  for file in bootstrap ls insert previous "done" configure build analyst; do
+  for file in ls insert previous "done" configure build analyst; do
     source "$PLANROOT/agents-common/bash/aap-$file.bash"
   done
 }
