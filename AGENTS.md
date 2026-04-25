@@ -20,11 +20,16 @@ does that operation.
 
 # Available `aap-*` helpers
 
-## `aap-bootstrap [--help]`
+The usage text of these helpers use the following convention:
 
-Initialize `$PLANROOT` with an initial root objective.
+- <node> corresponds to the name of a directory in $PLANROOT/ObjectiveTree, which
+typically begin with two digits and a hyphen. For example: `02-preserve-topics-on-no-match`.
 
-The description is read from stdin.
+- <ref> is a string that uniquely identifies a <node> among the siblings of the current goal,
+by matching the beginning thereof. Usually the starting digits.
+
+- <refpath> uniquely identifies a <node> anywhere in the plan tree. It must begin
+with a `/` followed by zero or more `<ref>` identifiers. For example: `/02/01`.
 
 ## `aap-ls [--fix|--no-fix] [--help]`
 
@@ -45,6 +50,7 @@ If `--parent` is not given, the new `<node>` must lexicographically be ordered
 immediately before the current objective, as shown by `aap-ls`.
 
 If `--parent` is given, the new `<node>` is added to that parent.
+Use `--parent /` to add a new `<node>` to `ObjectiveTree` itself.
 
 ## `aap-configure [<cmake args>...]`
 
@@ -61,14 +67,13 @@ Only use this when `$REPOROOT` uses CMake.
 ## `aap-done <ref>`
 
 Mark the current objective as achieved, then update `current_objective` to the
-lexicographically first not-achieved leaf.
+lexicographically first not-achieved <node>.
 
-The current objective must match `<ref>`.
+<ref> must match the current objective.
 
 ## `aap-previous`
 
-Move `current_objective` to the previous leaf goal in depth-first
-lexicographic order and mark it not-achieved.
+Move `current_objective` to the previous goal in depth-first lexicographic order and mark it not-achieved.
 
 Normally this is only used when the user specifically asks to revisit the
 previous objective or goal because it was marked done by mistake.
@@ -122,8 +127,7 @@ The current objective is the target of the symbolic link:
 
 `$PLANROOT/current_objective`
 
-This symlink must point either to the root objective or to one of its descendant
-goal directories.
+This symlink must point to one of the <node> directories.
 
 Therefore, the description of the current objective is always:
 
@@ -162,8 +166,6 @@ For example:
 
 ```text
 ObjectiveTree/
-  description
-  status
   01-define-scope/
     description
     status
@@ -171,18 +173,18 @@ ObjectiveTree/
     description
     status
   03-run-benchmarks/
-    description
-    status
     01-benchmark-inversion/
       description
       status
     02-benchmark-composition/
       description
       status
+    description
+    status
 ```
 
-In this example, `03-run-benchmarks/` is a goal of `ObjectiveTree/`, but also an
-objective for its own child goals.
+In this example, `03-run-benchmarks/` is a primary goal (of `ObjectiveTree/`),
+but also an objective for its own child goals.
 
 ## Default dependency rule
 
