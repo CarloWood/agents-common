@@ -62,7 +62,9 @@ EOF
   fi
 
   local text="$1"
+  local match_status
   local topic_list
+  match_status=0
   topic_list="$(python3 - "$text" <<'PY'
 import re
 import sys
@@ -71,12 +73,18 @@ text = sys.argv[1]
 match = re.search(r'(?:^|\n)Topic List:?\n([1-9][\s\S]*?)(?:\n\n|$)', text)
 if match:
     sys.stdout.write(match.group(1))
+    raise SystemExit(0)
+raise SystemExit(1)
 PY
-)"
+)" || match_status=$?
 
   local current_link="$PLANROOT/analyst/current"
   local topics_path="$current_link/topics"
   if [[ -L "$current_link" || -d "$current_link" ]]; then
+    if (( match_status != 0 )); then
+      exit 0
+    fi
+
     if [[ $AICLI_MODE == "analyst" ]]; then
       unset AICLI_MODE
       remountctl rw ai-cli "/${REPOBASE}-AAP"
