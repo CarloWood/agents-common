@@ -46,12 +46,6 @@ usage: aap-analyst-update-topic-list <text>
 
 Extract the first "Topic List:" block from <text> and write it to
 $PLANROOT/analyst/current/topics.
-
-This helper is intended for analyst-mode automation only. It must be run with
-AICLI_MODE=analyst.
-
-If no Topic List block is found in <text>, the extracted topic list is empty and
-the current topics file is overwritten with an empty list.
 EOF
     exit 0
   fi
