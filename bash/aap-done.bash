@@ -56,8 +56,13 @@ EOF
     exit 1
   fi
 
+  # Set parent_abs to the parent directory of current_abs, unless that is the ObjectiveTree,
+  # then set parent_abs to the same directory.
   local parent_abs
   parent_abs="$(dirname -- "$current_abs")"
+  if [[ "$(readlink -f -- "$current_abs")" == "$(readlink -f -- "$objective_tree")" ]]; then
+    parent_abs="$current_abs"
+  fi
 
   local resolved
   resolved="$(__aap_resolve_ref_in_parent "$PLANROOT" "$parent_abs" "$ref")"
