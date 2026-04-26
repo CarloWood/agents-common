@@ -93,6 +93,16 @@ EOF
     fi
   fi
 
+  # Print the <refpath> of the parent of the current objective,
+  # or, if no current_objective exists, print 'Parent refpath: /'.
+  local parent_refpath="/"
+  if [[ -L "$current_objective_link" ]]; then
+    local current_objective
+    current_objective="$(readlink -f -- "$current_objective_link")"
+    parent_refpath="$(__aap_refpath_of "$current_objective")"
+  fi
+  printf 'Parent refpath: %s\n' "$parent_refpath"
+
   # abs = 'absolute' and indicates that a variable contains the full (absolute) and cannonical path, as returned by `readlink -f`.
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
