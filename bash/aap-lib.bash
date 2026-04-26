@@ -139,31 +139,15 @@ __aap_is_leaf() {
   ! __aap_node_has_goal_dirs "$node"
 }
 
-__aap_list_leaf_nodes() {
-  local root="$1"
-  local stack=("$root")
-
-  while (( ${#stack[@]} > 0 )); do
-    local node="${stack[-1]}"
-    unset 'stack[-1]'
-
-    local children=()
-    local child
+# __aap_list_depth_first_post_order_nodes <root>
+#
+# Return full paths of all node directories in <root>, in depth-first post-order.
+# <root> itself would come after this list, but is not returned.
+__aap_list_depth_first_post_order_nodes() {
     while IFS= read -r -d '' child; do
-      children+=("$child")
+      __aap_list_depth_first_post_order_nodes "$child"
+      printf '%s\0' "$child"
     done < <(__aap_list_goal_dirs "$node")
-
-    if (( ${#children[@]} == 0 )); then
-      printf '%s\0' "$node"
-      continue
-    fi
-
-    # Push children in reverse so we visit them lexicographically depth-first.
-    local i
-    for (( i=${#children[@]}-1; i>=0; --i )); do
-      stack+=("${children[i]}")
-    done
-  done
 }
 
 __aap_find_first_not_achieved_leaf() {
@@ -176,7 +160,7 @@ __aap_find_first_not_achieved_leaf() {
       printf '%s\n' "$leaf"
       return 0
     fi
-  done < <(__aap_list_leaf_nodes "$root")
+  done < <(__aap_list_depth_first_post_order_nodes "$root")
 
   return 1
 }
