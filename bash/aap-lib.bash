@@ -145,6 +145,7 @@ __aap_is_leaf() {
 # <root> itself would come after this list, but is not returned.
 __aap_list_depth_first_post_order_nodes() {
   local root="$1"
+  local child
   while IFS= read -r -d '' child; do
     __aap_list_depth_first_post_order_nodes "$child"
     printf '%s\0' "$child"
