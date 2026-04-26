@@ -99,7 +99,7 @@ EOF
   if [[ -L "$current_objective_link" ]]; then
     local current_objective
     current_objective="$(readlink -f -- "$current_objective_link")"
-    parent_refpath="$(__aap_refpath_of "$current_objective")"
+    parent_refpath="$(__aap_refpath_of "$(dirname "$current_objective")")"
   fi
   printf 'Parent refpath: %s\n' "$parent_refpath"
 
