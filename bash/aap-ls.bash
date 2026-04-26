@@ -26,7 +26,7 @@ __aap_ls_impl() (
         cat <<EOF
 usage: aap-ls [--fix|--no-fix] [--help]
 
-Print an overview of the current AAP ObjectiveTree and (optionally) fix common
+Print an overview of the current plan and (optionally) fix common
 problems to restore invariants.
 
 Options:
@@ -99,13 +99,10 @@ EOF
     if (( fix )); then
       rm -f -- "$current_objective_link" 2>/dev/null || true
     fi
-    __aap_notice "All goals have been achieved."
-    printf 'Parent objective: $PLANROOT/ObjectiveTree/\n'
     local child
     while IFS= read -r -d '' child; do
       __aap_print_achieved "  " "$(basename -- "$child")"
     done < <(__aap_list_goal_dirs "$objective_tree")
-    printf '@) current objective:\n'
     printf '(all goals achieved)\n'
     exit 0
   fi
@@ -231,10 +228,12 @@ EOF
 
   local parent_display='$PLANROOT'
   if [[ -n "$parent_rel" ]]; then
-    parent_display+="/$parent_rel"
+    parent_display+="/$parent_rel/"
+    printf 'Parent objective: %s\n' "$parent_display"
+  else
+    parent_display+="/"
+    printf 'Primary objectives\n'
   fi
-  parent_display+="/"
-  printf 'Parent objective: %s\n' "$parent_display"
 
   local current_rel
   current_rel="$(__aap_rel_to_planroot "$PLANROOT" "$current_node_abs")"
