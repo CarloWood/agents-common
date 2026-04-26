@@ -49,7 +49,7 @@ EOF
   if [[ -L "$current_objective_link" ]]; then
     current_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null || true)"
   fi
-  if [[ -n "$current_abs" && -d "$current_abs" ]]"; then
+  if [[ -n "$current_abs" && -d "$current_abs" ]]; then
     local i
     for (( i=0; i<${#nodes[@]}; ++i )); do
       if [[ "$(readlink -f -- "${nodes[i]}")" == "$current_abs" ]]; then
