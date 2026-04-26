@@ -63,10 +63,10 @@ EOF
     local node="${stack[-1]}"
     unset 'stack[-1]'
 
-    if ! __aap_ensure_description "$PLANROOT" "$node" "$fix"; then
+    if ! __aap_ensure_description "$node" "$fix"; then
       continue
     fi
-    __aap_ensure_status "$PLANROOT" "$node" "$fix"
+    __aap_ensure_status "$node" "$fix"
 
     local children=()
     local child
@@ -80,11 +80,11 @@ EOF
     fi
 
     local status
-    status="$(__aap_read_status "$PLANROOT" "$node")"
+    status="$(__aap_read_status "$node")"
 
     if (( is_leaf )); then
-      if [[ -z "$first_not_achieved_leaf" && "$status" == "not-achieved" ]]; then
-        first_not_achieved_leaf="$node"
+      if [[ -z "$first_not_achieved_node" && "$status" == "not-achieved" ]]; then
+        first_not_achieved_node="$node"
       fi
     fi
 
@@ -116,7 +116,7 @@ EOF
     raw_target="$(readlink -- "$current_objective_link" 2>/dev/null || true)"
     if [[ -z "$raw_target" ]]; then
       current_target_abs=""
-      current_target_display="$(__aap_rel_to_planroot "$PLANROOT" "$current_objective_link")"
+      current_target_display="$(__aap_rel_to_planroot "$current_objective_link")"
     else
       local candidate="$raw_target"
       if [[ "$candidate" != /* ]]; then
@@ -128,7 +128,7 @@ EOF
         current_target_abs=""
       fi
       if [[ "$raw_target" == /* ]]; then
-        current_target_display="$(__aap_rel_to_planroot "$PLANROOT" "$raw_target")"
+        current_target_display="$(__aap_rel_to_planroot "$raw_target")"
       else
         current_target_display="$raw_target"
       fi
@@ -150,7 +150,7 @@ EOF
         else
           __aap_warn_out "current_objective is broken:"
         fi
-        ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+        ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
         desired_current="$(readlink -f -- "$current_objective_link")"
         __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
       else
@@ -159,7 +159,7 @@ EOF
       fi
     else
       local current_status
-      current_status="$(__aap_read_status "$PLANROOT" "$current_objective_link")"
+      current_status="$(__aap_read_status "$current_objective_link")"
 
       local current_is_leaf=1
       if __aap_node_has_goal_dirs "$current_target_abs"; then
@@ -171,7 +171,7 @@ EOF
           if [[ "$current_status" == "not-achieved" ]]; then
             desired_current="$current_target_abs"
           else
-            ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+            ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
             desired_current="$(readlink -f -- "$current_objective_link")"
             __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
           fi
@@ -184,7 +184,7 @@ EOF
       else
         if (( fix )); then
           __aap_warn_out "current_objective points to an internal node; updating to first not-achieved leaf objective."
-          ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+          ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
           desired_current="$(readlink -f -- "$current_objective_link")"
           __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
         else
@@ -195,7 +195,7 @@ EOF
     fi
   else
     if (( fix )); then
-      ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$first_not_achieved_leaf")" "$current_objective_link"
+      ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
       desired_current="$(readlink -f -- "$current_objective_link")"
       __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
     else
@@ -210,7 +210,7 @@ EOF
   fi
 
   if [[ ! -d "$current_node_abs" ]]; then
-    __aap_die "Current objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$current_node_abs")"
+    __aap_die "Current objective is not a directory: $(__aap_rel_to_planroot "$current_node_abs")"
     exit 1
   fi
 
@@ -221,7 +221,7 @@ EOF
   fi
 
   local parent_rel
-  parent_rel="$(__aap_rel_to_planroot "$PLANROOT" "$parent_node_abs")"
+  parent_rel="$(__aap_rel_to_planroot "$parent_node_abs")"
   if [[ "$parent_rel" == "." ]]; then
     parent_rel=""
   fi
@@ -236,17 +236,17 @@ EOF
   fi
 
   local current_rel
-  current_rel="$(__aap_rel_to_planroot "$PLANROOT" "$current_node_abs")"
+  current_rel="$(__aap_rel_to_planroot "$current_node_abs")"
 
   while IFS= read -r -d '' child; do
     local child_name
     child_name="$(basename -- "$child")"
 
     local child_rel
-    child_rel="$(__aap_rel_to_planroot "$PLANROOT" "$child")"
+    child_rel="$(__aap_rel_to_planroot "$child")"
 
     local child_status
-    child_status="$(__aap_read_status "$PLANROOT" "$child")"
+    child_status="$(__aap_read_status "$child")"
 
     if [[ "$child_rel" == "$current_rel" ]]; then
       if [[ "$child_status" == "achieved" ]]; then

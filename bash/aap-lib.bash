@@ -16,9 +16,8 @@ __aap_die() {
 }
 
 __aap_rel_to_planroot() {
-  local planroot="$1"
-  local path="$2"
-  realpath --relative-to="$planroot" "$path"
+  local path="$1"
+  realpath --relative-to="$PLANROOT" "$path"
 }
 
 __aap_is_goal_dir() {
@@ -38,8 +37,7 @@ __aap_node_has_goal_dirs() {
 }
 
 __aap_read_status() {
-  local planroot="$1"
-  local node="$2"
+  local node="$1"
   local status_path="$node/status"
 
   if [[ ! -f "$status_path" ]]; then
@@ -49,32 +47,34 @@ __aap_read_status() {
 
   local s
   s="$(<"$status_path")"
-  s="${s//$'\r'/}"
   s="${s//$'\n'/}"
   case "$s" in
     achieved|not-achieved) printf '%s\n' "$s" ;;
-    *) __aap_die "Invalid status in $(__aap_rel_to_planroot "$planroot" "$status_path"): '$s' (expected achieved|not-achieved)." ;;
+    *) __aap_die "Invalid status in $(__aap_rel_to_planroot "$status_path"): '$s' (expected achieved|not-achieved)." ;;
   esac
 }
 
 __aap_write_status() {
-  local planroot="$1"
-  local node="$2"
-  local value="$3"
+  local node="$1"
+  local value="$2"
   local status_path="$node/status"
 
   case "$value" in
     achieved|not-achieved) ;;
-    *) __aap_die "Invalid status value '$value' for $(__aap_rel_to_planroot "$planroot" "$node")"; return 1 ;;
+    *) __aap_die "Invalid status value '$value' for $(__aap_rel_to_planroot "$node")"; return 1 ;;
   esac
 
   printf '%s\n' "$value" >"$status_path"
 }
 
 __aap_ensure_description() {
-  local planroot="$1"
-  local node="$2"
-  local fix="$3"
+  local node="$1"
+  local fix="$2"
+
+  if [[ $(basename "$node") == "ObjectiveTree" ]]; then
+    __aap_die "Erroneously calling __aap_ensure_description on ObjectiveTree."
+    return 1
+  fi
 
   local desc_path="$node/description"
   if [[ -f "$desc_path" ]]; then
@@ -82,35 +82,39 @@ __aap_ensure_description() {
   fi
 
   if __aap_node_has_goal_dirs "$node"; then
-    __aap_die "Missing description file: $(__aap_rel_to_planroot "$planroot" "$desc_path") (planner must write it)."
+    __aap_die "Missing description file: $(__aap_rel_to_planroot "$desc_path") (planner must write it)."
     return 1
   fi
 
   if (( fix )); then
-    __aap_warn "Removing leaf plan node missing description: $(__aap_rel_to_planroot "$planroot" "$node")"
+    __aap_warn "Removing leaf plan node missing description: $(__aap_rel_to_planroot "$node")"
     rm -rf -- "$node"
     return 2
   fi
 
-  __aap_die "Leaf plan node missing description: $(__aap_rel_to_planroot "$planroot" "$node")"
+  __aap_die "Leaf plan node missing description: $(__aap_rel_to_planroot "$node")"
   return 1
 }
 
 __aap_ensure_status() {
-  local planroot="$1"
-  local node="$2"
-  local fix="$3"
+  local node="$1"
+  local fix="$2"
+
+  if [[ $(basename "$node") == "ObjectiveTree" ]]; then
+    __aap_die "Erroneously calling __aap_ensure_status on ObjectiveTree."
+    return 1
+  fi
 
   local status_path="$node/status"
   if [[ -f "$status_path" ]]; then
     return 0
   fi
   if (( fix )); then
-    __aap_warn "Adding missing status file: $(__aap_rel_to_planroot "$planroot" "$status_path")"
+    __aap_warn "Adding missing status file: $(__aap_rel_to_planroot "$status_path")"
     printf 'not-achieved\n' >"$status_path"
     return 0
   fi
-  __aap_die "Missing status file: $(__aap_rel_to_planroot "$planroot" "$status_path")"
+  __aap_die "Missing status file: $(__aap_rel_to_planroot "$status_path")"
   return 1
 }
 
@@ -127,17 +131,16 @@ __aap_list_depth_first_post_order_nodes() {
   done < <(__aap_list_goal_dirs "$root")
 }
 
-# __aap_find_first_not_achieved_node <planroot> <root>
+# __aap_find_first_not_achieved_node <root>
 #
 # Print the first not-achieved node in <root>, not including <root> itself.
 # Return 0 if successful and 1 if all nodes in <root> have been achieved.
 __aap_find_first_not_achieved_node() {
-  local planroot="$1"
-  local root="$2"
+  local root="$1"
   local node
 
   while IFS= read -r -d '' node; do
-    if [[ "$(__aap_read_status "$planroot" "$node")" == "not-achieved" ]]; then
+    if [[ "$(__aap_read_status "$node")" == "not-achieved" ]]; then
       printf '%s\n' "$node"
       return 0
     fi
@@ -147,9 +150,8 @@ __aap_find_first_not_achieved_node() {
 }
 
 __aap_rollup_statuses_from() {
-  local planroot="$1"
-  local node="$2"
-  local root="$3"
+  local node="$1"
+  local root="$2"
 
   local root_abs
   root_abs="$(readlink -f -- "$root")"
@@ -159,21 +161,21 @@ __aap_rollup_statuses_from() {
 
   while :; do
     if __aap_node_has_goal_dirs "$cur"; then
-      __aap_ensure_status "$planroot" "$cur" 1 || return 1
+      __aap_ensure_status "$cur" 1 || return 1
 
       local all_achieved=1
       local child
       while IFS= read -r -d '' child; do
-        if [[ "$(__aap_read_status "$planroot" "$child")" != "achieved" ]]; then
+        if [[ "$(__aap_read_status "$child")" != "achieved" ]]; then
           all_achieved=0
           break
         fi
       done < <(__aap_list_goal_dirs "$cur")
 
       if (( all_achieved )); then
-        __aap_write_status "$planroot" "$cur" achieved || return 1
+        __aap_write_status "$cur" achieved || return 1
       else
-        __aap_write_status "$planroot" "$cur" not-achieved || return 1
+        __aap_write_status "$cur" not-achieved || return 1
       fi
     fi
 
@@ -192,9 +194,8 @@ __aap_normalize_ref() {
 }
 
 __aap_resolve_ref_in_parent() {
-  local planroot="$1"
-  local parent="$2"
-  local ref="$3"
+  local parent="$1"
+  local ref="$2"
 
   local ref_norm
   ref_norm="$(__aap_normalize_ref "$ref")"
@@ -221,7 +222,7 @@ __aap_resolve_ref_in_parent() {
   done < <(__aap_list_goal_dirs "$parent")
 
   if (( ${#matches[@]} == 0 )); then
-    __aap_die "Unknown ref '$ref' under $(__aap_rel_to_planroot "$planroot" "$parent")."
+    __aap_die "Unknown ref '$ref' under $(__aap_rel_to_planroot "$parent")."
     return 1
   fi
 
@@ -231,7 +232,7 @@ __aap_resolve_ref_in_parent() {
     for m in "${matches[@]}"; do
       names+=("$(basename -- "$m")")
     done
-    __aap_die "Ambiguous ref '$ref' under $(__aap_rel_to_planroot "$planroot" "$parent"): ${names[*]}"
+    __aap_die "Ambiguous ref '$ref' under $(__aap_rel_to_planroot "$parent"): ${names[*]}"
     return 1
   fi
 
@@ -267,10 +268,9 @@ __aap_ref_matches_element() {
 }
 
 __aap_resolve_refpath_parent() {
-  local planroot="$1"
-  local objective_tree="$2"
-  local current_objective_abs="$3"
-  local refpath="$4"
+  local objective_tree="$1"
+  local current_objective_abs="$2"
+  local refpath="$3"
 
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
@@ -386,10 +386,9 @@ __aap_resolve_refpath_parent() {
 }
 
 __aap_insert_position_ok() {
-  local planroot="$1"
-  local parent="$2"
-  local new_name="$3"
-  local current_name="$4"
+  local parent="$1"
+  local new_name="$2"
+  local current_name="$3"
 
   local names=()
   local child
@@ -407,7 +406,7 @@ __aap_insert_position_ok() {
   done
 
   if (( ! current_found )); then
-    __aap_die "Current objective '$current_name' is not a direct child of $(__aap_rel_to_planroot "$planroot" "$parent")."
+    __aap_die "Current objective '$current_name' is not a direct child of $(__aap_rel_to_planroot "$parent")."
     return 1
   fi
 
@@ -424,20 +423,19 @@ __aap_insert_position_ok() {
   done
 
   if (( cur_idx <= 0 )); then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$planroot" "$parent")."
+    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$parent")."
     return 1
   fi
 
   if [[ "${sorted[cur_idx-1]}" != "$new_name" ]]; then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$planroot" "$parent")."
+    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$parent")."
     return 1
   fi
 }
 
 __aap_token_unique_in_parent() {
-  local planroot="$1"
-  local parent="$2"
-  local new_name="$3"
+  local parent="$1"
+  local new_name="$2"
 
   local new_token
   new_token="$(__aap_goal_token "$new_name")"
@@ -450,7 +448,7 @@ __aap_token_unique_in_parent() {
     token="$(__aap_goal_token "$name")"
 
     if [[ "$token" == "$new_token" ]]; then
-      __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$planroot" "$parent") (conflicts with '$token')."
+      __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$parent") (conflicts with '$token')."
       return 1
     fi
 
@@ -465,7 +463,7 @@ __aap_token_unique_in_parent() {
       # Two-digit refs (e.g. "01") are special-cased to match "01-..." only, so they do
       # not conflict with inserted goals like "01.5-...".
       if [[ ! "$shorter" =~ ^[0-9]{2}$ ]]; then
-        __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$planroot" "$parent") (conflicts with '$token')."
+        __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$parent") (conflicts with '$token')."
         return 1
       fi
     fi

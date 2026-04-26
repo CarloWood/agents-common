@@ -57,7 +57,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")"
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$objective_tree")"
     exit 1
   fi
 
@@ -68,14 +68,14 @@ EOF
 
   local parent_abs=""
   if [[ -n "$parent_refpath" ]]; then
-    parent_abs="$(__aap_resolve_refpath_parent "$PLANROOT" "$objective_tree" "$current_abs" "$parent_refpath")"
+    parent_abs="$(__aap_resolve_refpath_parent "$objective_tree" "$current_abs" "$parent_refpath")"
   else
     if [[ -z "$current_abs" || ! -d "$current_abs" ]]; then
       __aap_die "current_objective is missing or broken; run aap-ls --fix or use aap-insert --parent /."
       exit 1
     fi
     parent_abs="$(dirname -- "$current_abs")"
-    __aap_insert_position_ok "$PLANROOT" "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
+    __aap_insert_position_ok "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
   fi
 
   if [[ $parent_abs != "$PLANROOT/ObjectiveTree" && $parent_abs != "$PLANROOT/ObjectiveTree/"* ]]; then
@@ -88,15 +88,15 @@ EOF
   fi
 
   if [[ ! -d "$parent_abs" ]]; then
-    __aap_die "Resolved parent is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$parent_abs")"
+    __aap_die "Resolved parent is not a directory: $(__aap_rel_to_planroot "$parent_abs")"
     exit 1
   fi
 
-  __aap_token_unique_in_parent "$PLANROOT" "$parent_abs" "$node_name"
+  __aap_token_unique_in_parent "$parent_abs" "$node_name"
 
   local new_dir="$parent_abs/$node_name"
   if [[ -e "$new_dir" ]]; then
-    __aap_die "Node already exists: $(__aap_rel_to_planroot "$PLANROOT" "$new_dir")"
+    __aap_die "Node already exists: $(__aap_rel_to_planroot "$new_dir")"
     exit 1
   fi
 
@@ -119,9 +119,9 @@ EOF
   fi
   printf 'not-achieved\n' >"$new_dir/status"
 
-  ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$new_dir")" "$current_objective_link"
+  ln -snf -- "$(__aap_rel_to_planroot "$new_dir")" "$current_objective_link"
 
-  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+  __aap_rollup_statuses_from "$parent_abs" "$objective_tree"
 
   __aap_notice "Updated current_objective to point to $(basename -- "$new_dir")."
 )

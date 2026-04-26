@@ -29,7 +29,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_notice "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree");"' Use `aap-insert --parent / <node>` to add a primary objective.'
+    __aap_notice "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$objective_tree");"' Use `aap-insert --parent / <node>` to add a primary objective.'
     exit 0
   fi
 
@@ -41,12 +41,12 @@ EOF
   local current_abs
   current_abs="$(readlink -f -- "$current_objective_link")"
   if [[ ! -d "$current_abs" ]]; then
-    __aap_die "current_objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$current_abs")"
+    __aap_die "current_objective is not a directory: $(__aap_rel_to_planroot "$current_abs")"
     exit 1
   fi
 
   local current_status
-  current_status="$(__aap_read_status "$PLANROOT" "$current_abs")"
+  current_status="$(__aap_read_status "$current_abs")"
   if [[ "$current_status" != "not-achieved" ]]; then
     __aap_die "current objective is already achieved: $(basename -- "$current_abs")"
     exit 1
@@ -61,7 +61,7 @@ EOF
   fi
 
   local resolved
-  resolved="$(__aap_resolve_ref_in_parent "$PLANROOT" "$parent_abs" "$ref")"
+  resolved="$(__aap_resolve_ref_in_parent "$parent_abs" "$ref")"
   if [[ "$(readlink -f -- "$resolved")" != "$(readlink -f -- "$current_abs")" ]]; then
     __aap_die "Ref '$ref' does not refer to the current objective ($(basename -- "$current_abs"))."
     exit 1
@@ -74,15 +74,15 @@ EOF
     export AICLI_MODE="coder"
   fi
 
-  __aap_ensure_status "$PLANROOT" "$current_abs" 1
-  __aap_write_status "$PLANROOT" "$current_abs" achieved
+  __aap_ensure_status "$current_abs" 1
+  __aap_write_status "$current_abs" achieved
 
-  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+  __aap_rollup_statuses_from "$parent_abs" "$objective_tree"
 
-  local next_not_achieved_node=""
-  if next_not_achieved_node="$(__aap_find_first_not_achieved_node "$PLANROOT" "$objective_tree")"; then
-    ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$next_not_achieved_node")" "$current_objective_link"
-    __aap_notice "Updated current_objective to point to $(basename -- "$next_not_achieved_node")."
+  local first_not_achieved_node=""
+  if first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"; then
+    ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
+    __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_node")."
     exit 0
   fi
 

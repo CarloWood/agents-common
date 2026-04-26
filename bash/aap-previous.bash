@@ -29,7 +29,7 @@ EOF
   local current_objective_link="$PLANROOT/current_objective"
 
   if [[ ! -d "$objective_tree" ]]; then
-    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")"
+    __aap_die "Missing ObjectiveTree directory: $(__aap_rel_to_planroot "$objective_tree")"
     exit 1
   fi
 
@@ -40,7 +40,7 @@ EOF
   done < <(__aap_list_depth_first_post_order_nodes "$objective_tree")
 
   if (( ${#nodes[@]} == 0 )); then
-    __aap_die "No nodes found under $(__aap_rel_to_planroot "$PLANROOT" "$objective_tree")."
+    __aap_die "No nodes found under $(__aap_rel_to_planroot "$objective_tree")."
     exit 1
   fi
 
@@ -73,17 +73,17 @@ EOF
     export AICLI_MODE="coder"
   fi
 
-  __aap_ensure_status "$PLANROOT" "$prev_node" 1
-  __aap_write_status "$PLANROOT" "$prev_node" not-achieved
+  __aap_ensure_status "$prev_node" 1
+  __aap_write_status "$prev_node" not-achieved
 
   local parent_abs
   parent_abs="$(dirname -- "$prev_node")"
   if [[ "$(readlink -f -- "$prev_node")" == "$(readlink -f -- "$objective_tree")" ]]; then
     parent_abs="$prev_node"
   fi
-  __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
+  __aap_rollup_statuses_from "$parent_abs" "$objective_tree"
 
-  ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$prev_node")" "$current_objective_link"
+  ln -snf -- "$(__aap_rel_to_planroot "$prev_node")" "$current_objective_link"
   __aap_notice "Updated current_objective to point to $(basename -- "$prev_node")."
 )
 
