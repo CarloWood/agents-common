@@ -1,5 +1,29 @@
 # The implementations of `aap-*` commands are defined in a `set -euo pipefail` subshell.
 # That gives us “strict mode” without running the risk to permanently changing the caller’s environment.
+
+# __aap_ls_impl [OPTIONS]
+#
+# If no current_objective exists and --fix is given or the default,
+# then try to find the first not-achieved node if any and create
+# current_objective if found.
+#
+# Print the <refpath> of the parent of the current objective, or
+# if no current_objective exists, print 'Parent refpath: /'.
+#
+# If (still) no current_objective exists then print all primary nodes
+# with a 'v' in front of them if they are achieved and if all goals
+# have been achieved print '(all goals achieved)' at the end.
+#
+# If current_objective exists, then print the 'Parent refpath: '
+# followed by the <refpath> of the parent of the current_objective,
+# followed by the goals of that parent with a 'v' in front of those
+# that are already achieved.
+#
+# Printing of goals is done by calling:
+# __aap_print_achieved "  " "$child"
+# for child goals that are not current, and
+# __aap_print_achieved " @" "$child"
+# for the child goal that current_directory is pointing at.
 #
 __aap_ls_impl() (
   set -euo pipefail
@@ -12,7 +36,7 @@ __aap_ls_impl() (
   local fix=1
   local default_fix=
   local default_no_fix=
-  if [[ $AICLI_MODE != "planner" ]] && ! __aap_is_user; then
+  if [[ $AICLI_MODE != "planner" ]]; then
     fix=0
     default_no_fix=" (default)"
   else
@@ -48,15 +72,17 @@ EOF
     exit 0
   fi
 
-  if [[ $AICLI_MODE != "planner" && $fix -eq 1 ]] && ! __aap_is_user; then
-    __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-ls with the argument --fix: The PLANROOT is read-only!"
+  if [[ $AICLI_MODE != "planner" && $fix -eq 1 ]]; then
+    if __aap_is_user; then
+      __aap_die "Can not use --fix while the agent is not \"planner\": PLANROOT is read-only."
+    else
+      __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-ls with the argument --fix: The PLANROOT is read-only!"
+    fi
     exit 1
   fi
 
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
-
-  local first_not_achieved_leaf=""
 
   local stack=("$objective_tree")
   while (( ${#stack[@]} > 0 )); do
@@ -95,7 +121,7 @@ EOF
     done
   done
 
-  if [[ -z "$first_not_achieved_leaf" ]]; then
+  if [[ -z "$first_not_achieved_node" ]]; then
     if (( fix )); then
       rm -f -- "$current_objective_link" 2>/dev/null || true
     fi
@@ -135,7 +161,7 @@ EOF
     fi
   fi
 
-  local desired_current="$first_not_achieved_leaf"
+  local desired_current="$first_not_achieved_node"
 
   if (( current_link_exists )); then
     local link_ok=0
@@ -152,10 +178,10 @@ EOF
         fi
         ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
         desired_current="$(readlink -f -- "$current_objective_link")"
-        __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
+        __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_node")."
       else
         __aap_warn_out "current_objective exists but is broken."
-        desired_current="$first_not_achieved_leaf"
+        desired_current="$first_not_achieved_node"
       fi
     else
       local current_status
@@ -173,7 +199,7 @@ EOF
           else
             ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
             desired_current="$(readlink -f -- "$current_objective_link")"
-            __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
+            __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_node")."
           fi
         else
           desired_current="$current_target_abs"
@@ -186,10 +212,10 @@ EOF
           __aap_warn_out "current_objective points to an internal node; updating to first not-achieved leaf objective."
           ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
           desired_current="$(readlink -f -- "$current_objective_link")"
-          __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
+          __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_node")."
         else
           __aap_warn_out "current_objective points to an internal node."
-          desired_current="$first_not_achieved_leaf"
+          desired_current="$first_not_achieved_node"
         fi
       fi
     fi
@@ -197,10 +223,10 @@ EOF
     if (( fix )); then
       ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
       desired_current="$(readlink -f -- "$current_objective_link")"
-      __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_leaf")."
+      __aap_notice "Updated current_objective to point to $(basename -- "$first_not_achieved_node")."
     else
       __aap_warn_out "current_objective symlink missing."
-      desired_current="$first_not_achieved_leaf"
+      desired_current="$first_not_achieved_node"
     fi
   fi
 
@@ -229,7 +255,7 @@ EOF
   local parent_display='$PLANROOT'
   if [[ -n "$parent_rel" ]]; then
     parent_display+="/$parent_rel/"
-    printf 'Parent objective: %s\n' "$parent_display"
+    printf 'Parent refpath: %s\n' "$parent_display"
   else
     parent_display+="/"
     printf 'Primary objectives\n'

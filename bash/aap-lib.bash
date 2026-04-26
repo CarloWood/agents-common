@@ -149,6 +149,13 @@ __aap_find_first_not_achieved_node() {
   return 1
 }
 
+# __aap_rollup_statuses_from <node> <root>
+#
+# Starting at <node> and walking upward to <root> (inclusive), recompute the
+# status of each non-leaf node from the statuses of its direct child goals.
+# A non-leaf node becomes `achieved` iff all of its direct child goals are
+# `achieved`; otherwise it becomes `not-achieved`.
+# Missing status files on visited non-leaf nodes are created automatically.
 __aap_rollup_statuses_from() {
   local node="$1"
   local root="$2"
