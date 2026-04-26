@@ -144,10 +144,11 @@ __aap_is_leaf() {
 # Return full paths of all node directories in <root>, in depth-first post-order.
 # <root> itself would come after this list, but is not returned.
 __aap_list_depth_first_post_order_nodes() {
-    while IFS= read -r -d '' child; do
-      __aap_list_depth_first_post_order_nodes "$child"
-      printf '%s\0' "$child"
-    done < <(__aap_list_goal_dirs "$node")
+  local root="$1"
+  while IFS= read -r -d '' child; do
+    __aap_list_depth_first_post_order_nodes "$child"
+    printf '%s\0' "$child"
+  done < <(__aap_list_goal_dirs "$root")
 }
 
 __aap_find_first_not_achieved_leaf() {
