@@ -20,7 +20,7 @@ __aap_done_impl() (
 usage: aap-done <ref>
 
 Mark the current objective as achieved (must match <ref>), then update
-$PLANROOT/current_objective to the lexicographically first not-achieved leaf.
+$PLANROOT/current_objective to the first not-achieved node of the current plan.
 EOF
     exit 0
   fi
@@ -42,10 +42,6 @@ EOF
   current_abs="$(readlink -f -- "$current_objective_link")"
   if [[ ! -d "$current_abs" ]]; then
     __aap_die "current_objective is not a directory: $(__aap_rel_to_planroot "$PLANROOT" "$current_abs")"
-    exit 1
-  fi
-  if ! __aap_is_leaf "$current_abs"; then
-    __aap_die "current_objective is not a leaf objective: $(__aap_rel_to_planroot "$PLANROOT" "$current_abs")"
     exit 1
   fi
 
@@ -83,10 +79,10 @@ EOF
 
   __aap_rollup_statuses_from "$PLANROOT" "$parent_abs" "$objective_tree"
 
-  local next_leaf=""
-  if next_leaf="$(__aap_find_first_not_achieved_leaf "$PLANROOT" "$objective_tree")"; then
-    ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$next_leaf")" "$current_objective_link"
-    __aap_notice "Updated current_objective to point to $(basename -- "$next_leaf")."
+  local next_not_achieved_node=""
+  if next_not_achieved_node="$(__aap_find_first_not_achieved_node "$PLANROOT" "$objective_tree")"; then
+    ln -snf -- "$(__aap_rel_to_planroot "$PLANROOT" "$next_not_achieved_node")" "$current_objective_link"
+    __aap_notice "Updated current_objective to point to $(basename -- "$next_not_achieved_node")."
     exit 0
   fi
 

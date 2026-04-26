@@ -134,11 +134,6 @@ __aap_ensure_status() {
   return 1
 }
 
-__aap_is_leaf() {
-  local node="$1"
-  ! __aap_node_has_goal_dirs "$node"
-}
-
 # __aap_list_depth_first_post_order_nodes <root>
 #
 # Return full paths of all node directories in <root>, in depth-first post-order.
@@ -152,14 +147,18 @@ __aap_list_depth_first_post_order_nodes() {
   done < <(__aap_list_goal_dirs "$root")
 }
 
-__aap_find_first_not_achieved_leaf() {
+# __aap_find_first_not_achieved_node <planroot> <root>
+#
+# Print first not-achieved node of <root>, not including <root> itself.
+# Return 0 if successful and 1 if all objectives have been achieved.
+__aap_find_first_not_achieved_node() {
   local planroot="$1"
   local root="$2"
-  local leaf
+  local node
 
-  while IFS= read -r -d '' leaf; do
-    if [[ "$(__aap_read_status "$planroot" "$leaf")" == "not-achieved" ]]; then
-      printf '%s\n' "$leaf"
+  while IFS= read -r -d '' node; do
+    if [[ "$(__aap_read_status "$planroot" "$node")" == "not-achieved" ]]; then
+      printf '%s\n' "$node"
       return 0
     fi
   done < <(__aap_list_depth_first_post_order_nodes "$root")

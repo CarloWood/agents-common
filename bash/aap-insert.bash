@@ -74,10 +74,6 @@ EOF
       __aap_die "current_objective is missing or broken; run aap-ls --fix or use aap-insert --parent /."
       exit 1
     fi
-    if ! __aap_is_leaf "$current_abs"; then
-      __aap_die "current_objective is not a leaf objective; run aap-ls --fix."
-      exit 1
-    fi
     parent_abs="$(dirname -- "$current_abs")"
     __aap_insert_position_ok "$PLANROOT" "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
   fi
