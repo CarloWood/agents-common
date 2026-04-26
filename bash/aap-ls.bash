@@ -81,6 +81,19 @@ EOF
     exit 1
   fi
 
+  local first_not_achieved_node=""
+
+  # If no current_objective exists and --fix is given,
+  if [[ ! -L "$current_objective_link" && $fix -eq 1 ]]; then
+    # then try to find the first not-achieved node if any
+    if first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"; then
+      # and create current_objective if found.
+      ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
+      __aap_notice "Updated current_objective to point to $(__aap_refpath_of "$first_not_achieved_node")."
+    fi
+  fi
+
+  # abs = 'absolute' and indicates that a variable contains the full (absolute) and cannonical path, as returned by `readlink -f`.
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
 

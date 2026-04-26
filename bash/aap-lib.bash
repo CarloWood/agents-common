@@ -149,6 +149,74 @@ __aap_find_first_not_achieved_node() {
   return 1
 }
 
+# __aap_refpath_of <node>
+#
+# Prints an abbreviated but unique path for <node>.
+# For example if <node> is `x/y/ObjectiveTree/04.5-foo/01-leaf`
+# and `x/y/ObjectiveTree/04.51-foo/01-leaf` also exists then
+# this will print `/04.5-/01-leaf`.
+__aap_refpath_of() {
+  local node="$1"
+  local rel parent part abbrev out
+  local -a parts
+  local sibling sibling_base
+  local need_hyphen
+
+  rel="${node#*/ObjectiveTree}"
+
+  if [[ $rel == "$node" ]]; then
+    echo "__aap_refpath_of: Not below ObjectiveTree: $node" >&2
+    return 1
+  fi
+
+  rel="${rel#/}"
+
+  if [[ -z $rel ]]; then
+    printf '/\n'
+    return 0
+  fi
+
+  IFS=/ read -r -a parts <<< "$rel"
+
+  parent="${node%/ObjectiveTree/*}/ObjectiveTree"
+  out=
+
+  for part in "${parts[@]:0:${#parts[@]}-1}"; do
+    abbrev="${part%%-*}"
+
+    # If there is no hyphen, don't abbreviate this component.
+    if [[ $abbrev == "$part" ]]; then
+      out+="/$part"
+      parent+="/$part"
+      continue
+    fi
+
+    need_hyphen=false
+
+    for sibling in "$parent"/"$abbrev"*; do
+      [[ -d $sibling ]] || continue
+
+      sibling_base="${sibling##*/}"
+
+      if [[ $sibling_base != "$part" ]]; then
+        need_hyphen=true
+        break
+      fi
+    done
+
+    if [[ $need_hyphen == true ]]; then
+      out+="/$abbrev-"
+    else
+      out+="/$abbrev"
+    fi
+
+    parent+="/$part"
+  done
+
+  out+="/${parts[-1]}"
+  printf '%s\n' "$out"
+}
+
 # __aap_rollup_statuses_from <node> <root>
 #
 # Starting at <node> and walking upward to <root> (inclusive), recompute the
