@@ -18,15 +18,7 @@ __aap_die() {
 __aap_rel_to_planroot() {
   local planroot="$1"
   local path="$2"
-
-  if command -v realpath >/dev/null 2>&1; then
-    realpath --relative-to="$planroot" "$path"
-  else
-    case "$path" in
-      "$planroot"/*) printf '%s\n' "${path#"$planroot"/}" ;;
-      *) printf '%s\n' "$path" ;;
-    esac
-  fi
+  realpath --relative-to="$planroot" "$path"
 }
 
 __aap_is_goal_dir() {
@@ -35,19 +27,7 @@ __aap_is_goal_dir() {
 
 __aap_list_goal_dirs() {
   local node="$1"
-  local children=()
-  local entry
-
-  while IFS= read -r -d '' entry; do
-    children+=("$entry")
-  done < <(find "$node" -mindepth 1 -maxdepth 1 -type d -print0 2>/dev/null | LC_ALL=C sort -z)
-
-  local child
-  for child in "${children[@]}"; do
-    if __aap_is_goal_dir "$child"; then
-      printf '%s\0' "$child"
-    fi
-  done
+  find "$node" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print0 2>/dev/null | LC_ALL=C sort -z
 }
 
 __aap_node_has_goal_dirs() {
@@ -149,8 +129,8 @@ __aap_list_depth_first_post_order_nodes() {
 
 # __aap_find_first_not_achieved_node <planroot> <root>
 #
-# Print first not-achieved node of <root>, not including <root> itself.
-# Return 0 if successful and 1 if all objectives have been achieved.
+# Print the first not-achieved node in <root>, not including <root> itself.
+# Return 0 if successful and 1 if all nodes in <root> have been achieved.
 __aap_find_first_not_achieved_node() {
   local planroot="$1"
   local root="$2"
