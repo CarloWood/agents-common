@@ -67,13 +67,13 @@ Only use this when `$REPOROOT` uses CMake.
 ## `aap-done <ref>`
 
 Mark the current objective as achieved, then update `current_objective` to the
-lexicographically first not-achieved <node>.
+first not-achieved <node> in lexicographic depth-first post-order traversal.
 
 <ref> must match the current objective.
 
 ## `aap-previous`
 
-Move `current_objective` to the previous goal in depth-first lexicographic order and mark it not-achieved.
+Move `current_objective` to the previous node in lexicographic depth-first post-order and mark it not-achieved.
 
 Normally this is only used when the user specifically asks to revisit the
 previous objective or goal because it was marked done by mistake.
@@ -146,7 +146,7 @@ therefore begin with a numeric ordering prefix of two digits:
 03-...
 ```
 
-Lexical order defines plan order.
+Lexicographic depth-first post-order defines plan order.
 
 Earlier goals are normally addressed before later goals.
 
