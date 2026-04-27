@@ -82,16 +82,18 @@ EOF
   # Call `__aap_ensure_description` and `__aap_ensure_status` on all nodes,
   local node
   while IFS= read -r -d '' node; do
-    local ensure_description_rc=0
-    if ! __aap_ensure_description "$node" "$fix"; then
+    # Run __aap_ensure_description in an `if` to be able to make a distincting between it return 1 or 2.
+    if __aap_ensure_description "$node" "$fix"; then
+      __aap_ensure_status "$node" "$fix"
+    else
       ensure_description_rc=$?
       if (( ensure_description_rc == 2 )); then
         # node was removed.
         continue
       fi
+      # Fatal error.
       exit "$ensure_description_rc"
     fi
-    __aap_ensure_status "$node" "$fix"
   done < <(__aap_list_depth_first_post_order_nodes "$objective_tree")
 
   # Find the first not-achieved node in the tree, if any.
