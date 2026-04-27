@@ -394,17 +394,17 @@ __aap_resolve_refpath_parent() {
   local match_index=-1
   if (( absolute )); then
     if [[ -z "$current_objective_abs" || "${current_elems[0]}" == "99-non-existent" ]]; then
-      __aap_die "Cannot resolve absolute --parent '$4' without a valid current_objective (use --parent /)."
+      __aap_die "Cannot resolve absolute --parent '$3' without a valid current_objective (use --parent /)."
       return 1
     fi
     local i
     for (( i=0; i<${#refs[@]}; ++i )); do
       if (( i >= ${#current_elems[@]} )); then
-        __aap_die "Absolute --parent '$4' is longer than the current_objective path."
+        __aap_die "Absolute --parent '$3' is longer than the current_objective path."
         return 1
       fi
       if ! __aap_ref_matches_element "${refs[i]}" "${current_elems[i]}"; then
-        __aap_die "Absolute --parent '$4' does not match the current_objective path at element ${i}."
+        __aap_die "Absolute --parent '$3' does not match the current_objective path at element ${i}."
         return 1
       fi
     done
@@ -435,7 +435,7 @@ __aap_resolve_refpath_parent() {
       fi
     done
     if (( match_index < 0 )); then
-      __aap_die "Could not match --parent '$4' against the current_objective path."
+      __aap_die "Could not match --parent '$3' against the current_objective path."
       return 1
     fi
   fi
