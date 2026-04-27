@@ -36,6 +36,9 @@ __aap_node_has_goal_dirs() {
   [[ -n "$found" ]]
 }
 
+# __aap_read_status <node>
+#
+# Print "achieved" or "not-achieved"
 __aap_read_status() {
   local node="$1"
   local status_path="$node/status"
@@ -111,7 +114,7 @@ __aap_ensure_status() {
   fi
   if (( fix )); then
     __aap_warn "Adding missing status file: $(__aap_rel_to_planroot "$status_path")"
-    printf 'not-achieved\n' >"$status_path"
+    __aap_rollup_not_achieved_from "$node" "$PLANROOT/ObjectiveTree"
     return 0
   fi
   __aap_die "Missing status file: $(__aap_rel_to_planroot "$status_path")"
@@ -217,46 +220,32 @@ __aap_refpath_of() {
   printf '%s\n' "$out"
 }
 
-# __aap_rollup_statuses_from <node> <root>
+# __aap_rollup_not_achieved_from <node> <root>
 #
-# Starting at <node> and walking upward to <root> (inclusive), recompute the
-# status of each non-leaf node from the statuses of its direct child goals.
-# A non-leaf node becomes `achieved` iff all of its direct child goals are
-# `achieved`; otherwise it becomes `not-achieved`.
-# Missing status files on visited non-leaf nodes are created automatically.
-__aap_rollup_statuses_from() {
+# Starting at <node> and walking upward to <root> (exclusive), mark each visited
+# node as `not-achieved`. Stop before <root> or before an ancestor that is already
+# `not-achieved`.
+__aap_rollup_not_achieved_from() {
   local node="$1"
   local root="$2"
 
+  # abs = 'absolute' and marks a variable as a full, absolute path canonicalized with `readlink -f`.
   local root_abs
   root_abs="$(readlink -f -- "$root")"
 
-  local cur
-  cur="$(readlink -f -- "$node")"
+  local current_abs
+  current_abs="$(readlink -f -- "$node")"
 
-  while :; do
-    if __aap_node_has_goal_dirs "$cur"; then
-      __aap_ensure_status "$cur" 1 || return 1
-
-      local all_achieved=1
-      local child
-      while IFS= read -r -d '' child; do
-        if [[ "$(__aap_read_status "$child")" != "achieved" ]]; then
-          all_achieved=0
-          break
-        fi
-      done < <(__aap_list_goal_dirs "$cur")
-
-      if (( all_achieved )); then
-        __aap_write_status "$cur" achieved || return 1
-      else
-        __aap_write_status "$cur" not-achieved || return 1
+  if [[ "$current_abs" != "$root_abs" ]]; then
+    while :; do
+      __aap_write_status "$current_abs" not-achieved || return 1
+      current_abs="$(dirname -- "$current_abs")"
+      if [[ "$current_abs" == "$root_abs" ||
+            "$(__aap_read_status "$current_abs")" == "not-achieved" ]]; then
+        break
       fi
-    fi
-
-    [[ "$cur" == "$root_abs" ]] && break
-    cur="$(dirname -- "$cur")"
-  done
+    done
+  fi
 }
 
 __aap_normalize_ref() {

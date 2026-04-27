@@ -77,8 +77,6 @@ EOF
   __aap_ensure_status "$current_abs" 1
   __aap_write_status "$current_abs" achieved
 
-  __aap_rollup_statuses_from "$parent_abs" "$objective_tree"
-
   local first_not_achieved_node=""
   if first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"; then
     ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"

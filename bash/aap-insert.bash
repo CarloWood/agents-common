@@ -117,11 +117,9 @@ EOF
   if [[ "$desc" != *$'\n' ]]; then
     printf '\n' >>"$new_dir/description"
   fi
-  printf 'not-achieved\n' >"$new_dir/status"
+  __aap_rollup_not_achieved_from "$new_dir" "$objective_tree"
 
   ln -snf -- "$(__aap_rel_to_planroot "$new_dir")" "$current_objective_link"
-
-  __aap_rollup_statuses_from "$parent_abs" "$objective_tree"
 
   __aap_notice "Updated current_objective to point to $(basename -- "$new_dir")."
 )
