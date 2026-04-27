@@ -290,7 +290,7 @@ __aap_resolve_ref_in_parent() {
   done < <(__aap_list_goal_dirs "$parent")
 
   if (( ${#matches[@]} == 0 )); then
-    __aap_die "Unknown ref '$ref' under $(__aap_rel_to_planroot "$parent")."
+    __aap_die "Unknown ref '$ref' under $(__aap_refpath_of "$parent")."
     return 1
   fi
 
@@ -300,7 +300,7 @@ __aap_resolve_ref_in_parent() {
     for m in "${matches[@]}"; do
       names+=("$(basename -- "$m")")
     done
-    __aap_die "Ambiguous ref '$ref' under $(__aap_rel_to_planroot "$parent"): ${names[*]}"
+    __aap_die "Ambiguous ref '$ref' under $(__aap_refpath_of "$parent"): ${names[*]}"
     return 1
   fi
 
@@ -474,7 +474,7 @@ __aap_insert_position_ok() {
   done
 
   if (( ! current_found )); then
-    __aap_die "Current objective '$current_name' is not a direct child of $(__aap_rel_to_planroot "$parent")."
+    __aap_die "Current objective '$current_name' is not a direct child of $(__aap_refpath_of "$parent")."
     return 1
   fi
 
@@ -491,12 +491,12 @@ __aap_insert_position_ok() {
   done
 
   if (( cur_idx <= 0 )); then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$parent")."
+    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent")."
     return 1
   fi
 
   if [[ "${sorted[cur_idx-1]}" != "$new_name" ]]; then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_rel_to_planroot "$parent")."
+    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent")."
     return 1
   fi
 }
@@ -516,7 +516,7 @@ __aap_token_unique_in_parent() {
     token="$(__aap_goal_token "$name")"
 
     if [[ "$token" == "$new_token" ]]; then
-      __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$parent") (conflicts with '$token')."
+      __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_refpath_of "$parent") (conflicts with '$token')."
       return 1
     fi
 
@@ -531,7 +531,7 @@ __aap_token_unique_in_parent() {
       # Two-digit refs (e.g. "01") are special-cased to match "01-..." only, so they do
       # not conflict with inserted goals like "01.5-...".
       if [[ ! "$shorter" =~ ^[0-9]{2}$ ]]; then
-        __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_rel_to_planroot "$parent") (conflicts with '$token')."
+        __aap_die "Numeric prefix token '$new_token' is not unique under $(__aap_refpath_of "$parent") (conflicts with '$token')."
         return 1
       fi
     fi

@@ -92,7 +92,7 @@ EOF
 
   local new_dir="$parent_abs/$node_name"
   if [[ -e "$new_dir" ]]; then
-    __aap_die "Node already exists: $(__aap_rel_to_planroot "$new_dir")"
+    __aap_die "Node already exists: $(__aap_refpath_of "$new_dir")"
     exit 1
   fi
 
