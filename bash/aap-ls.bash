@@ -7,17 +7,15 @@
 # then try to find the first not-achieved node if any and create
 # current_objective if found.
 #
-# Print the <refpath> of the parent of the current objective, or
-# if no current_objective exists, print 'Parent refpath: /'.
+# Print the 'Parent refpath: ' followed by the <refpath> of the parent of the current_objective,
+# or if no current_objective exists, print 'Parent refpath: /'.
 #
-# If (still) no current_objective exists then print all primary nodes
-# with a 'v' in front of them if they are achieved and if all goals
-# have been achieved print '(all goals achieved)' at the end.
+# If all nodes are achieved then print all primary nodes with a 'v' in front of them
+# and then print '(all goals achieved)' at the end.
 #
-# If current_objective exists, then print the 'Parent refpath: '
-# followed by the <refpath> of the parent of the current_objective,
-# followed by the goals of that parent with a 'v' in front of those
-# that are already achieved.
+# Otherwise print the goals of the parent of the current objective with a 'v' in front
+# of those that are already achieved, and finally print '@) current objective:'
+# followed by the contents of the `description` file of the current objective.
 #
 # Printing of goals is done by calling:
 # __aap_print_achieved "  " "$child"
@@ -81,69 +79,32 @@ EOF
     exit 1
   fi
 
-  local first_not_achieved_node=""
+  # Find the first not-achieved node in the tree, if any.
+  local first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"
 
   # If no current_objective exists and --fix is given,
   if [[ ! -L "$current_objective_link" && $fix -eq 1 ]]; then
     # then try to find the first not-achieved node if any
-    if first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"; then
+    if [[ -n "$first_not_achieved_node" ]]; then
       # and create current_objective if found.
       ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
       __aap_notice "Updated current_objective to point to $(__aap_refpath_of "$first_not_achieved_node")."
     fi
   fi
 
-  # Print the <refpath> of the parent of the current objective,
-  # or, if no current_objective exists, print 'Parent refpath: /'.
+  # Print the 'Parent refpath: ' followed by the <refpath> of the parent of the current_objective,
+  # or if no current_objective exists, print 'Parent refpath: /'.
   local parent_refpath="/"
   if [[ -L "$current_objective_link" ]]; then
-    local current_objective
-    current_objective="$(readlink -f -- "$current_objective_link")"
-    parent_refpath="$(__aap_refpath_of "$(dirname "$current_objective")")"
+    local current_objective_abs
+    # abs = 'absolute' and indicates that a variable contains the full (absolute) and cannonical path, as returned by `readlink -f`.
+    current_objective_abs="$(readlink -f -- "$current_objective_link")"
+    parent_refpath="$(__aap_refpath_of "$(dirname "$current_objective_abs")")"
   fi
   printf 'Parent refpath: %s\n' "$parent_refpath"
 
-  # abs = 'absolute' and indicates that a variable contains the full (absolute) and cannonical path, as returned by `readlink -f`.
-  local objective_tree_abs
-  objective_tree_abs="$(readlink -f -- "$objective_tree")"
-
-  local stack=("$objective_tree")
-  while (( ${#stack[@]} > 0 )); do
-    local node="${stack[-1]}"
-    unset 'stack[-1]'
-
-    if ! __aap_ensure_description "$node" "$fix"; then
-      continue
-    fi
-    __aap_ensure_status "$node" "$fix"
-
-    local children=()
-    local child
-    while IFS= read -r -d '' child; do
-      children+=("$child")
-    done < <(__aap_list_goal_dirs "$node")
-
-    local is_leaf=1
-    if (( ${#children[@]} > 0 )); then
-      is_leaf=0
-    fi
-
-    local status
-    status="$(__aap_read_status "$node")"
-
-    if (( is_leaf )); then
-      if [[ -z "$first_not_achieved_node" && "$status" == "not-achieved" ]]; then
-        first_not_achieved_node="$node"
-      fi
-    fi
-
-    # Push children in reverse so we visit them lexicographically depth-first.
-    local i
-    for (( i=${#children[@]}-1; i>=0; --i )); do
-      stack+=("${children[i]}")
-    done
-  done
-
+  # If all nodes are achieved then print all primary nodes with a 'v' in front of them
+  # and then print '(all goals achieved)' at the end.
   if [[ -z "$first_not_achieved_node" ]]; then
     if (( fix )); then
       rm -f -- "$current_objective_link" 2>/dev/null || true
@@ -155,6 +116,24 @@ EOF
     printf '(all goals achieved)\n'
     exit 0
   fi
+
+  # Otherwise print the goals of the parent of the current objective with a 'v' in front
+  # of those that are already achieved, and finally print '@) current objective:'
+  # followed by the contents of the `description` file of the current objective.
+
+  # Call `__aap_ensure_description` and `__aap_ensure_status` on all nodes,
+  local nodes=()
+  local node
+  while IFS= read -r -d '' node; do
+    if ! __aap_ensure_description "$node" "$fix"; then
+      # node was removed.
+      continue
+    fi
+    __aap_ensure_status "$node" "$fix"
+    nodes+=("$node")
+  done < <(__aap_list_depth_first_post_order_nodes "$objective_tree")
+
+  # I am here ...
 
   local current_link_exists=0
   local current_target_abs=""
