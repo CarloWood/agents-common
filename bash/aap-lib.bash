@@ -257,6 +257,10 @@ __aap_normalize_ref() {
   printf '%s\n' "$ref"
 }
 
+# __aap_resolve_ref_in_parent <parent> <ref>
+#
+# Print the full path of the goal in <parent> uniquely defined by <ref>.
+# Returns 1 if no such node exists or if more than one match <ref>.
 __aap_resolve_ref_in_parent() {
   local parent="$1"
   local ref="$2"

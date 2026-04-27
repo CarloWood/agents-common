@@ -73,14 +73,7 @@ EOF
     export AICLI_MODE="coder"
   fi
 
-  __aap_ensure_status "$prev_node" 1
   __aap_rollup_not_achieved_from "$prev_node" "$objective_tree"
-
-  local parent_abs
-  parent_abs="$(dirname -- "$prev_node")"
-  if [[ "$(readlink -f -- "$prev_node")" == "$(readlink -f -- "$objective_tree")" ]]; then
-    parent_abs="$prev_node"
-  fi
 
   ln -snf -- "$(__aap_rel_to_planroot "$prev_node")" "$current_objective_link"
   __aap_notice "Updated current_objective to point to $(basename -- "$prev_node")."
