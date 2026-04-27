@@ -133,7 +133,11 @@ EOF
     nodes+=("$node")
   done < <(__aap_list_depth_first_post_order_nodes "$objective_tree")
 
-  # I am here ...
+  # I am here ... anything below is old code.
+
+  local objective_tree_abs
+  objective_tree_abs="$(readlink -f -- "$objective_tree")"
+
 
   local current_link_exists=0
   local current_target_abs=""
