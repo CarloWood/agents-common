@@ -300,7 +300,7 @@ __aap_resolve_ref_in_parent() {
     for m in "${matches[@]}"; do
       names+=("$(basename -- "$m")")
     done
-    __aap_die "Ambiguous ref '$ref' under $(__aap_refpath_of "$parent"): ${names[*]}"
+    __aap_die "Ambiguous ref '$ref' under $(__aap_refpath_of "$parent"). Multiple matches:\n${names[*]}"
     return 1
   fi
 
