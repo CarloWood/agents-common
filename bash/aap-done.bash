@@ -52,6 +52,8 @@ EOF
     exit 1
   fi
 
+  local parent_abs
+  parent_abs="$(dirname -- "$current_abs")"
   local resolved
   resolved="$(__aap_resolve_ref_in_parent "$parent_abs" "$ref")"
   local resolved_abs
