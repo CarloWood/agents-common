@@ -14,8 +14,8 @@ __aap_previous_impl() (
     cat <<'EOF'
 usage: aap-previous
 
-Move current_objective to the previous goal (depth-first lexicographic
-order) and mark it not-achieved.
+Move current_objective to the previous goal (lexicographic depth-first post-order)
+and mark it not-achieved.
 EOF
     exit 0
   fi
@@ -74,7 +74,6 @@ EOF
   fi
 
   __aap_ensure_status "$prev_node" 1
-  __aap_write_status "$prev_node" not-achieved
   __aap_rollup_not_achieved_from "$prev_node" "$objective_tree"
 
   local parent_abs
