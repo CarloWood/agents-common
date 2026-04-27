@@ -82,9 +82,14 @@ EOF
   # Call `__aap_ensure_description` and `__aap_ensure_status` on all nodes,
   local node
   while IFS= read -r -d '' node; do
+    local ensure_description_rc=0
     if ! __aap_ensure_description "$node" "$fix"; then
-      # node was removed.
-      continue
+      ensure_description_rc=$?
+      if (( ensure_description_rc == 2 )); then
+        # node was removed.
+        continue
+      fi
+      exit "$ensure_description_rc"
     fi
     __aap_ensure_status "$node" "$fix"
   done < <(__aap_list_depth_first_post_order_nodes "$objective_tree")
