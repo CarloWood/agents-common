@@ -295,12 +295,12 @@ __aap_resolve_ref_in_parent() {
   fi
 
   if (( ${#matches[@]} > 1 )); then
-    local names=()
+    local names=("Multiple matches:")
     local m
     for m in "${matches[@]}"; do
       names+=("$(basename -- "$m")")
     done
-    __aap_die "Ambiguous ref '$ref' under $(__aap_refpath_of "$parent"). Multiple matches:\n${names[*]}"
+    __aap_die "Ambiguous ref '$ref' under $(__aap_refpath_of "$parent"). ${names[*]}"
     return 1
   fi
 
