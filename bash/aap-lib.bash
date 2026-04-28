@@ -491,9 +491,12 @@ __aap_insert_position_ok() {
   local cur_idx=-1
   local i
   for (( i=0; i<${#sorted[@]}; ++i )); do
+    echo "Comparing \"${sorted[i]}\" with \"$current_name\"" >&2
     if [[ "${sorted[i]}" == "$current_name" ]]; then
       cur_idx=$i
       break
+    else
+      echo "  no match" >&2
     fi
   done
   
