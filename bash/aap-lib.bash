@@ -355,17 +355,12 @@ __aap_resolve_refpath_parent() {
     return 1
   fi
 
-  local current_abs=""
-  if [[ -n "${current_objective_abs:-}" ]]; then
-    current_abs="$(readlink -f -- "$current_objective_abs" 2>/dev/null || true)"
-  fi
-
   local current_rel=""
-  if [[ -n "$current_abs" && "$current_abs" == "$objective_tree_abs"* ]]; then
+  if [[ -n "$current_objective_abs" && "$current_objective_abs" == "$objective_tree_abs"* ]]; then
     if command -v realpath >/dev/null 2>&1; then
-      current_rel="$(realpath --relative-to="$objective_tree_abs" "$current_abs" 2>/dev/null || true)"
+      current_rel="$(realpath --relative-to="$objective_tree_abs" "$current_objective_abs" 2>/dev/null || true)"
     else
-      current_rel="${current_abs#"$objective_tree_abs"/}"
+      current_rel="${current_objective_abs#"$objective_tree_abs"/}"
     fi
   fi
 
