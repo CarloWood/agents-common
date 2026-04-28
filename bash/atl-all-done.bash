@@ -11,10 +11,11 @@ __atl_all_done() (
   local topics_path="$current_link/topics"
   if [[ -L "$current_link" || -d "$current_link" ]]; then
     if [[ $AICLI_MODE == "analyst" || $AICLI_MODE == "coder" ]]; then
+      local agent="$AICLI_MODE"
       unset AICLI_MODE
       remountctl rw ai-cli "/${REPOBASE}-AAP"
       trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
-      export AICLI_MODE="analyst"
+      export AICLI_MODE="$agent"
     fi
 
     printf '1. all done\n' > "$topics_path"

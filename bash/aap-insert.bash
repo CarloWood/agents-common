@@ -110,6 +110,14 @@ EOF
     exit 1
   fi
 
+  if [[ $AICLI_MODE == "analyst" || $AICLI_MODE == "coder" ]]; then
+    local agent="$AICLI_MODE"
+    unset AICLI_MODE
+    remountctl rw ai-cli "/${REPOBASE}-AAP"
+    trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
+    export AICLI_MODE="$agent"
+  fi
+
   mkdir -p -- "$new_dir"
   printf '%s' "$desc" >"$new_dir/description"
   if [[ "$desc" != *$'\n' ]]; then
