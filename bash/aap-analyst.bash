@@ -52,7 +52,7 @@ EOF
 
   if [[ $AICLI_MODE != "analyst" ]]; then
     __aap_warn "AICLI_MODE='$AICLI_MODE'"
-    __aap_die "aap-analyst-update-topic_list should only be run by the topic_list.js plugin."
+    __aap_die "aap-analyst-update-topic-list should only be run by the topic_list.js plugin."
     exit 1
   fi
 
