@@ -469,7 +469,7 @@ __aap_insert_position_ok() {
   local parent_abs
   parent_abs="$(dirname -- "$current_objective_abs")"
   local current_name
-  current_name="$(basename -- "current_objective_abs")"
+  current_name="$(basename -- "$current_objective_abs")"
 
   if [[ ! -d "$current_objective_abs" ]]; then
     __aap_die "Current objective points to non-existent node."
