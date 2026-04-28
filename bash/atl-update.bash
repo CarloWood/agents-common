@@ -1,7 +1,7 @@
-# __atp_update_impl <text>
+# __atl_update_impl <text>
 #
 # Extract the first Topic List block from <text> and write it to the current Topic List topics file.
-__atp_update_impl() (
+__atl_update_impl() (
   set -euo pipefail
 
   if [[ -z "${PLANROOT:-}" ]]; then
@@ -12,7 +12,7 @@ __atp_update_impl() (
   local ref="${1:-}"
   if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
     cat <<'EOF'
-usage: atp-update <text>
+usage: atl-update <text>
 
 Extract the first "Topic List:" block from <text> and write it to
 $PLANROOT/analyst/current/topics.
@@ -22,12 +22,12 @@ EOF
 
   if [[ $AICLI_MODE != "analyst" ]]; then
     __aap_warn "AICLI_MODE='$AICLI_MODE'"
-    __aap_die "atp-update should only be run by the AAP_support.js plugin."
+    __aap_die "atl-update should only be run by the AAP_support.js plugin."
     exit 1
   fi
 
   if (( $# != 1 )); then
-    __aap_die "usage: atp-update <text>"
+    __aap_die "usage: atl-update <text>"
     exit 1
   fi
 
@@ -70,6 +70,6 @@ PY
   fi
 )
 
-atp-update() {
-  __atp_update_impl "$@"
+atl-update() {
+  __atl_update_impl "$@"
 }

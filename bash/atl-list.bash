@@ -1,7 +1,7 @@
-# __atp_list_impl
+# __atl_list_impl
 #
 # Print the current analyst Topic List from $PLANROOT/analyst/current/topics, if it exists.
-__atp_list_impl() (
+__atl_list_impl() (
   set -euo pipefail
 
   if [[ -z "${PLANROOT:-}" ]]; then
@@ -11,7 +11,7 @@ __atp_list_impl() (
   local ref="${1:-}"
   if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
     cat <<'EOF'
-usage: atp-list [--help]
+usage: atl-list [--help]
 
    Print the current analyst Topic List, if one exists.
 
@@ -30,6 +30,6 @@ EOF
   cat "${PLANROOT}/analyst/current/topics"
 )
 
-atp-list() {
-  __atp_list_impl "$@"
+atl-list() {
+  __atl_list_impl "$@"
 }
