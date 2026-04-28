@@ -1,34 +1,58 @@
+# __aap_notice <message...>
+#
+# Print an informational notice to stdout using the standard AAP notice prefix.
 __aap_notice() {
   printf '%b%s\n' $'\e[36mNOTICE:\e[0m ' "$*"
 }
 
+# __aap_warn <message...>
+#
+# Print a warning to stderr using the standard AAP warning prefix.
 __aap_warn() {
   printf '%b%s\n' $'\e[31mWARNING:\e[0m ' "$*" >&2
 }
 
+# __aap_warn_out <message...>
+#
+# Print a warning to stdout; use when warnings should appear in command output.
 __aap_warn_out() {
   printf '%b%s\n' $'\e[31mWARNING:\e[0m ' "$*"
 }
 
+# __aap_die <message...>
+#
+# Print an error to stderr and return failure; callers may rely on set -e unless called in a conditional context.
 __aap_die() {
   printf 'ERROR: %s\n' "$*" >&2
   return 1
 }
 
+# __aap_rel_to_planroot <path>
+#
+# Print <path> relative to $PLANROOT, for human-readable diagnostics and symlink targets.
 __aap_rel_to_planroot() {
   local path="$1"
   realpath --relative-to="$PLANROOT" "$path"
 }
 
+# __aap_is_goal_dir <path>
+#
+# Return success if <path> is a visible plan child directory.
 __aap_is_goal_dir() {
   [[ -d "$1" && "$(basename "$1")" != .* ]]
 }
 
+# __aap_list_goal_dirs <node>
+#
+# Print NUL-separated direct child plan-node directories of <node>, sorted lexicographically.
 __aap_list_goal_dirs() {
   local node="$1"
   find "$node" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print0 2>/dev/null | LC_ALL=C sort -z
 }
 
+# __aap_node_has_goal_dirs <node>
+#
+# Return success if <node> has at least one visible child plan-node directory.
 __aap_node_has_goal_dirs() {
   local node="$1"
   local found=""
@@ -38,7 +62,8 @@ __aap_node_has_goal_dirs() {
 
 # __aap_read_status <node>
 #
-# Print "achieved" or "not-achieved"
+# Print the status of <node>: either `achieved` or `not-achieved`.
+# Missing status files are treated as `not-achieved` so callers can repair them.
 __aap_read_status() {
   local node="$1"
   local status_path="$node/status"
@@ -57,6 +82,9 @@ __aap_read_status() {
   esac
 }
 
+# __aap_write_status <node> <achieved|not-achieved>
+#
+# Validate and write the exact status value for <node>.
 __aap_write_status() {
   local node="$1"
   local value="$2"
@@ -70,6 +98,10 @@ __aap_write_status() {
   printf '%s\n' "$value" >"$status_path"
 }
 
+# __aap_ensure_description <node> <fix>
+#
+# Ensure <node>/description exists. If <fix> is true and a leaf lacks a description,
+# remove that malformed leaf and return 2; return failure for non-leaf nodes or ObjectiveTree.
 __aap_ensure_description() {
   local node="$1"
   local fix="$2"
@@ -99,6 +131,10 @@ __aap_ensure_description() {
   return 1
 }
 
+# __aap_ensure_status <node> <fix>
+#
+# Ensure <node>/status exists. If <fix> is true, create/propagate a not-achieved
+# status for <node>; return failure for ObjectiveTree or unfixable missing status.
 __aap_ensure_status() {
   local node="$1"
   local fix="$2"
@@ -154,7 +190,7 @@ __aap_find_first_not_achieved_node() {
 
 # __aap_refpath_of <node>
 #
-# Prints an abbreviated but unique path for <node>.
+# Print an abbreviated but unique absolute refpath for <node>.
 # For example if <node> is `x/y/ObjectiveTree/04.5-foo/01-leaf`
 # and `x/y/ObjectiveTree/04.51-foo/01-leaf` also exists then
 # this will print `/04.5-/01-leaf`.
@@ -248,6 +284,10 @@ __aap_rollup_not_achieved_from() {
   fi
 }
 
+# __aap_normalize_ref <ref>
+#
+# Normalize short numeric refs by adding a leading zero where appropriate,
+# e.g. `2`, `2.5`, and `2-foo` become `02`, `02.5`, and `02-foo`.
 __aap_normalize_ref() {
   local ref="$1"
   # Allow omitting the leading 0 for single-digit prefixes (e.g. "2" -> "02", "2.5" -> "02.5", "2-mark" -> "02-mark").
@@ -259,8 +299,8 @@ __aap_normalize_ref() {
 
 # __aap_resolve_ref_in_parent <parent> <ref>
 #
-# Print the full path of the goal in <parent> uniquely defined by <ref>.
-# Returns 1 if no such node exists or if more than one match <ref>.
+# Print the full path of the direct child of <parent> uniquely identified by <ref>.
+# Two-digit refs such as `01` match only `01-*`, not `01.5-*`.
 __aap_resolve_ref_in_parent() {
   local parent="$1"
   local ref="$2"
@@ -307,16 +347,26 @@ __aap_resolve_ref_in_parent() {
   printf '%s\n' "${matches[0]}"
 }
 
+# __aap_goal_name_ok <name>
+#
+# Return success if <name> has the required numeric ordering prefix and hyphen.
 __aap_goal_name_ok() {
   local name="$1"
   [[ "$name" =~ ^[0-9][0-9][^-]*- ]]
 }
 
+# __aap_goal_token <name>
+#
+# Print the ordering token before the first hyphen in a plan-node name.
 __aap_goal_token() {
   local name="$1"
   printf '%s\n' "${name%%-*}"
 }
 
+# __aap_ref_matches_element <ref> <element>
+#
+# Return success if <ref> can identify the path element <element>.
+# This is a low-level path matching helper; it does not check siblings for uniqueness.
 __aap_ref_matches_element() {
   local ref="$1"
   local element="$2"
@@ -335,6 +385,19 @@ __aap_ref_matches_element() {
   [[ "$element" == "$ref_norm"* ]]
 }
 
+# __aap_resolve_refpath_parent <objective_tree> <current_objective_abs> <parent-ref>
+#
+# Resolve the value passed to `aap-insert --parent` to a plan-node directory.
+# Intended semantics:
+# - `/` resolves to <objective_tree> itself, allowing insertion of a primary node.
+# - absolute refpaths beginning with `/`, such as `/03` or `/03/04/01`, resolve
+#   globally from ObjectiveTree and may target any existing node in the plan tree.
+# - non-absolute refs, such as `03`, resolve against the current `aap-ls` sibling
+#   listing: the direct children of the current objective's parent.
+# - if non-absolute paths with slashes are supported, resolve the first element
+#   in the current sibling listing and subsequent elements below that node.
+# The current implementation below is known to still contain older ancestor-path
+# matching logic and should be changed to match these semantics.
 __aap_resolve_refpath_parent() {
   local objective_tree="$1"
   local current_objective_abs="$2"
@@ -456,7 +519,8 @@ __aap_resolve_refpath_parent() {
 
 # __aap_insert_position_ok <current_objective_abs> <new_node>
 #
-# Checks whether <new_node> is lexicographically ordered immediately before <current_objective_abs>.
+# Check whether <new_node> would sort immediately before <current_objective_abs>
+# among the current objective's siblings. Used when aap-insert is called without --parent.
 __aap_insert_position_ok() {
   local current_objective_abs="$1"
   local new_node="$2"
@@ -499,6 +563,10 @@ __aap_insert_position_ok() {
   fi
 }
 
+# __aap_token_unique_in_parent <parent> <new_name>
+#
+# Ensure <new_name>'s numeric ordering token is unambiguous among <parent>'s
+# direct child plan nodes, so refs remain unique.
 __aap_token_unique_in_parent() {
   local parent="$1"
   local new_name="$2"
@@ -536,6 +604,9 @@ __aap_token_unique_in_parent() {
   done < <(__aap_list_goal_dirs "$parent")
 }
 
+# __aap_print_achieved <prefix> <child-name>
+#
+# Print one achieved child line using a checkmark in shell mode or `v` otherwise.
 __aap_print_achieved() {
   local prefix="$1"
   local child_name="$2"
@@ -546,6 +617,10 @@ __aap_print_achieved() {
   fi
 }
 
+# __aap_is_user
+#
+# Return success when the current command was initiated directly by the user,
+# as indicated by the OPENCODE_IS_USER_COMMAND marker.
 __aap_is_user() {
   local magic=$(echo "${OPENCODE_IS_USER_COMMAND:-}" | md5sum | awk '{ print $1 }')
   [[ $magic == "9fad39ae375a33ff8d1e9d2a8af3f268" ]]
