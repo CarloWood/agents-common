@@ -499,7 +499,7 @@ __aap_insert_position_ok() {
 
   # Make sure `new_name` was sorted right before it.
   if [[ $cur_idx -le 0 || "${sorted[cur_idx-1]}" != "$new_name" ]]; then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent")."
+    __aap_die "New node '$new_node' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent_abs")."
     return 1
   fi
 }
