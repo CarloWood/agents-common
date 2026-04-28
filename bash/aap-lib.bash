@@ -496,6 +496,8 @@ __aap_insert_position_ok() {
       break
     fi
   done
+  
+  echo "cur_idx = $cur_idx" >&2
 
   # Make sure `new_name` was sorted right before it.
   if [[ $cur_idx -le 0 || "${sorted[cur_idx-1]}" != "$new_name" ]]; then
