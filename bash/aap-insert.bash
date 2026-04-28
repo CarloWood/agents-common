@@ -92,9 +92,9 @@ EOF
 
   __aap_token_unique_in_parent "$parent_abs" "$node_name"
 
-  local new_dir="$parent_abs/$node_name"
-  if [[ -e "$new_dir" ]]; then
-    __aap_die "Node already exists: $(__aap_refpath_of "$new_dir")"
+  local new_node="$parent_abs/$node_name"
+  if [[ -e "$new_node" ]]; then
+    __aap_die "Node already exists: $(__aap_refpath_of "$new_node")"
     exit 1
   fi
 
@@ -118,16 +118,16 @@ EOF
     export AICLI_MODE="$agent"
   fi
 
-  mkdir -p -- "$new_dir"
-  printf '%s' "$desc" >"$new_dir/description"
+  mkdir -p -- "$new_node"
+  printf '%s' "$desc" >"$new_node/description"
   if [[ "$desc" != *$'\n' ]]; then
-    printf '\n' >>"$new_dir/description"
+    printf '\n' >>"$new_node/description"
   fi
-  __aap_rollup_not_achieved_from "$new_dir" "$objective_tree"
+  __aap_rollup_not_achieved_from "$new_node" "$objective_tree"
 
-  ln -snf -- "$(__aap_rel_to_planroot "$new_dir")" "$current_objective_link"
-
-  __aap_notice "Updated current_objective to point to $(basename -- "$new_dir")."
+  # Always set the new node as current objective.
+  ln -snf -- "$(__aap_rel_to_planroot "$new_node")" "$current_objective_link"
+  __aap_notice "Updated current_objective to point to $(basename -- "$new_node")."
 )
 
 aap-insert() {

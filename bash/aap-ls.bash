@@ -145,8 +145,10 @@ EOF
     repair_reason="current_objective symlink missing."
   fi
 
-  if [[ -z "$repair_reason" && "$current_node_abs" != "$first_not_achieved_node" ]]; then
-    repair_reason="current_objective does not point to the first not-achieved node."
+  if [[ -z "$repair_reason" ]]; then
+    if [[ "$(__aap_read_status "$current_node_abs")" != "not-achieved" ]]; then
+      repair_reason="current_objective does not point to a not-achieved node."
+    fi
   fi
 
   if [[ -n "$repair_reason" ]]; then

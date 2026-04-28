@@ -71,8 +71,10 @@ EOF
   fi
 
   __aap_ensure_status "$current_abs" 1
+  # Mark the current objective as achieved.
   __aap_write_status "$current_abs" achieved
 
+  # Set current_objective to the first not-achieved node of the current plan.
   local first_not_achieved_node=""
   if first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree")"; then
     ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
@@ -80,6 +82,7 @@ EOF
     exit 0
   fi
 
+  # No not-achieved node exists anymore.
   rm -f -- "$current_objective_link"
   __aap_notice "All goals have been achieved."
 )
