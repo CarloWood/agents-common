@@ -340,7 +340,7 @@ __aap_resolve_refpath_parent() {
   local current_objective_abs="$2"
   local refpath="$3"
 
-  echo "Calling __aap_resolve_refpath_parent $objective_tree $current_objective_abs $refpath"
+  echo "Calling __aap_resolve_refpath_parent $objective_tree $current_objective_abs $refpath" >&2
 
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
@@ -419,9 +419,9 @@ __aap_resolve_refpath_parent() {
     local last_ref="${refs[-1]}"
     local j
     for (( j=${#current_elems[@]}-1; j>=0; --j )); do
-      echo "  1. Calling __aap_ref_matches_element $last_ref ${current_elems[j]}"
+      echo "  1. Calling __aap_ref_matches_element $last_ref ${current_elems[j]}"  >&2
       if ! __aap_ref_matches_element "$last_ref" "${current_elems[j]}"; then
-        echo "  ... no match"
+        echo "  ... no match"  >&2
         continue
       fi
       local ok=1
@@ -432,9 +432,9 @@ __aap_resolve_refpath_parent() {
           ok=0
           break
         fi
-        echo "  2. Calling __aap_ref_matches_element ${refs[i]} ${current_elems[elem_index]}"
+        echo "  2. Calling __aap_ref_matches_element ${refs[i]} ${current_elems[elem_index]}"  >&2
         if ! __aap_ref_matches_element "${refs[i]}" "${current_elems[elem_index]}"; then
-          echo "  ... no match"
+          echo "  ... no match"  >&2
           ok=0
           break
         fi
