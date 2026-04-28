@@ -396,14 +396,10 @@ __aap_ref_matches_element() {
 #   listing: the direct children of the current objective's parent.
 # - if non-absolute paths with slashes are supported, resolve the first element
 #   in the current sibling listing and subsequent elements below that node.
-# The current implementation below is known to still contain older ancestor-path
-# matching logic and should be changed to match these semantics.
 __aap_resolve_refpath_parent() {
   local objective_tree="$1"
   local current_objective_abs="$2"
   local refpath="$3"
-
-  echo "Calling __aap_resolve_refpath_parent $objective_tree $current_objective_abs $refpath" >&2
 
   local objective_tree_abs
   objective_tree_abs="$(readlink -f -- "$objective_tree")"
@@ -416,22 +412,6 @@ __aap_resolve_refpath_parent() {
   if [[ -z "$refpath" ]]; then
     __aap_die "Missing --parent <refpath> value."
     return 1
-  fi
-
-  local current_rel=""
-  if [[ -n "$current_objective_abs" && "$current_objective_abs" == "$objective_tree_abs"* ]]; then
-    if command -v realpath >/dev/null 2>&1; then
-      current_rel="$(realpath --relative-to="$objective_tree_abs" "$current_objective_abs" 2>/dev/null || true)"
-    else
-      current_rel="${current_objective_abs#"$objective_tree_abs"/}"
-    fi
-  fi
-
-  local current_elems=()
-  if [[ -n "$current_rel" && "$current_rel" != "." ]]; then
-    IFS='/' read -r -a current_elems <<<"$current_rel"
-  else
-    current_elems=("99-non-existent")
   fi
 
   local absolute=0
@@ -455,68 +435,28 @@ __aap_resolve_refpath_parent() {
     fi
   done
 
-  local match_index=-1
+  local parent
   if (( absolute )); then
-    if [[ -z "$current_objective_abs" || "${current_elems[0]}" == "99-non-existent" ]]; then
-      __aap_die "Cannot resolve absolute --parent '$3' without a valid current_objective (use --parent /)."
-      return 1
-    fi
-    local i
-    for (( i=0; i<${#refs[@]}; ++i )); do
-      if (( i >= ${#current_elems[@]} )); then
-        __aap_die "Absolute --parent '$3' is longer than the current_objective path."
-        return 1
-      fi
-      if ! __aap_ref_matches_element "${refs[i]}" "${current_elems[i]}"; then
-        __aap_die "Absolute --parent '$3' does not match the current_objective path at element ${i}."
-        return 1
-      fi
-    done
-    match_index=$((${#refs[@]}-1))
+    parent="$objective_tree_abs"
   else
-    local last_ref="${refs[-1]}"
-    local j
-    for (( j=${#current_elems[@]}-1; j>=0; --j )); do
-      echo "  1. Calling __aap_ref_matches_element $last_ref ${current_elems[j]}"  >&2
-      if ! __aap_ref_matches_element "$last_ref" "${current_elems[j]}"; then
-        echo "  ... no match"  >&2
-        continue
-      fi
-      local ok=1
-      local i
-      for (( i=${#refs[@]}-1; i>=0; --i )); do
-        local elem_index=$((j - ((${#refs[@]}-1) - i)))
-        if (( elem_index < 0 )); then
-          ok=0
-          break
-        fi
-        echo "  2. Calling __aap_ref_matches_element ${refs[i]} ${current_elems[elem_index]}"  >&2
-        if ! __aap_ref_matches_element "${refs[i]}" "${current_elems[elem_index]}"; then
-          echo "  ... no match"  >&2
-          ok=0
-          break
-        fi
-      done
-      if (( ok )); then
-        match_index=$j
-        break
-      fi
-    done
-    if (( match_index < 0 )); then
-      __aap_die "Could not match --parent '$3' against the current_objective path."
+    if [[ -z "$current_objective_abs" || ! -d "$current_objective_abs" ]]; then
+      __aap_die "Cannot resolve relative --parent '$3' without a valid current_objective (use --parent / or an absolute refpath)."
       return 1
     fi
+    if [[ "$current_objective_abs" != "$objective_tree_abs"/* ]]; then
+      __aap_die "Cannot resolve relative --parent '$3' because current_objective is outside ObjectiveTree."
+      return 1
+    fi
+    parent="$(dirname -- "$current_objective_abs")"
   fi
 
-  local parent="$objective_tree_abs"
-  local i
-  for (( i=0; i<=match_index && i<${#current_elems[@]}; ++i )); do
-    parent+="/${current_elems[i]}"
+  local ref
+  for ref in "${refs[@]}"; do
+    parent="$(__aap_resolve_ref_in_parent "$parent" "$ref")" || return 1
   done
 
   printf '%s\n' "$parent"
 }
-
 # __aap_insert_position_ok <current_objective_abs> <new_node>
 #
 # Check whether <new_node> would sort immediately before <current_objective_abs>
