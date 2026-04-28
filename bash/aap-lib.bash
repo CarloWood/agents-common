@@ -481,29 +481,24 @@ __aap_insert_position_ok() {
   local child
   while IFS= read -r -d '' child; do
     names+=("$(basename -- "$child")")
-  done < <(__aap_list_goal_dirs "$parent")
+  done < <(__aap_list_goal_dirs "$parent_abs")
 
-  # Insert `new_name` and return sorted list in array `sorted`.
+  # Insert `new_node` and return sorted list in array `sorted`.
   local sorted=()
-  mapfile -t sorted < <(printf '%s\n' "${names[@]}" "$new_name" | LC_ALL=C sort)
+  mapfile -t sorted < <(printf '%s\n' "${names[@]}" "$new_node" | LC_ALL=C sort)
 
   # Find index of `current_name` in array `sorted`.
   local cur_idx=-1
   local i
   for (( i=0; i<${#sorted[@]}; ++i )); do
-    echo "Comparing \"${sorted[i]}\" with \"$current_name\"" >&2
     if [[ "${sorted[i]}" == "$current_name" ]]; then
       cur_idx=$i
       break
-    else
-      echo "  no match" >&2
     fi
   done
-  
-  echo "cur_idx = $cur_idx" >&2
 
-  # Make sure `new_name` was sorted right before it.
-  if [[ $cur_idx -le 0 || "${sorted[cur_idx-1]}" != "$new_name" ]]; then
+  # Make sure `new_node` was sorted right before it.
+  if [[ $cur_idx -le 0 || "${sorted[cur_idx-1]}" != "$new_node" ]]; then
     __aap_die "New node '$new_node' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent_abs")."
     return 1
   fi
