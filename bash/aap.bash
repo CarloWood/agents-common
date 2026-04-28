@@ -22,12 +22,17 @@ function __aap_load()
   for file in list all-done update; do
     source "$PLANROOT/agents-common/bash/atp-$file.bash"
   done
+
+  # Source ATL commands.
+  for file in show reset switch merge; do
+    source "$PLANROOT/agents-common/bash/atl-$file.bash"
+  done
 }
 
 __aap_load
 unset -f __aap_load
 
 # Export all functions defined here, because the AI needs them and opencode only provides it with exported stuff :/.
-for func in $(declare -F | grep '^declare -f ' | sed -e 's/^declare -f //' | grep -E '^(aap-|__aap|atp-|__atp)'); do
+for func in $(declare -F | grep '^declare -f ' | sed -e 's/^declare -f //' | grep -E '^(aap-|__aap|atp-|__atp|atl-|__atl)'); do
   declare -fx $func
 done

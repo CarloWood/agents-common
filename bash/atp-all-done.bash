@@ -1,3 +1,6 @@
+# __atp_all_done
+#
+# Replace the current Topic List topics file with the all-done marker.
 __atp_all_done() (
   if ! __aap_is_user; then
     __aap_die "atp-all-done is a user-only command."

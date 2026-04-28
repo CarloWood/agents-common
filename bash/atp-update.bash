@@ -1,3 +1,6 @@
+# __atp_update_impl <text>
+#
+# Extract the first Topic List block from <text> and write it to the current Topic List topics file.
 __atp_update_impl() (
   set -euo pipefail
 

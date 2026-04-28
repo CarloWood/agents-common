@@ -1,3 +1,6 @@
+# __atp_list_impl
+#
+# Print the current analyst Topic List from $PLANROOT/analyst/current/topics, if it exists.
 __atp_list_impl() (
   set -euo pipefail
 
