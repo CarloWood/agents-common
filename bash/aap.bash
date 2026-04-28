@@ -19,7 +19,7 @@ function __aap_load()
   done
 
   # Source ATP commands.
-  for file in list all-done update; do
+  for file in list all-done update show reset switch merge; do
     source "$PLANROOT/agents-common/bash/atl-$file.bash"
   done
 }
