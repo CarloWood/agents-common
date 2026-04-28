@@ -26,7 +26,9 @@ __aap_insert_impl() (
         cat <<'EOF'
 usage: aap-insert [--parent <refpath>] <node>
 
-Insert a new leaf goal node and set it as current_objective.
+Insert a new leaf goal node and set it as current_objective. If <refpath> is not
+absolute then it is interpreted as a <ref> relative the to parent of the current
+objective.
 
 The description is read from stdin (heredoc/piped input recommended). If stdin
 is a TTY, input is read until EOF (Ctrl-D).
@@ -61,21 +63,21 @@ EOF
     exit 1
   fi
 
-  local current_abs=""
+  local current_objective_abs=""
   if [[ -L "$current_objective_link" ]]; then
-    current_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null || true)"
+    current_objective_abs="$(readlink -f -- "$current_objective_link" 2>/dev/null || true)"
   fi
 
   local parent_abs=""
   if [[ -n "$parent_refpath" ]]; then
-    parent_abs="$(__aap_resolve_refpath_parent "$objective_tree" "$current_abs" "$parent_refpath")"
+    parent_abs="$(__aap_resolve_refpath_parent "$objective_tree" "$current_objective_abs" "$parent_refpath")"
   else
-    if [[ -z "$current_abs" || ! -d "$current_abs" ]]; then
+    if [[ -z "$current_objective_abs" || ! -d "$current_objective_abs" ]]; then
       __aap_die "current_objective is missing or broken; run aap-ls --fix or use aap-insert --parent /."
       exit 1
     fi
-    parent_abs="$(dirname -- "$current_abs")"
-    __aap_insert_position_ok "$parent_abs" "$node_name" "$(basename -- "$current_abs")"
+    parent_abs="$(dirname -- "$current_objective_abs")"
+    __aap_insert_position_ok "$current_objective_abs" "$node_name"
   fi
 
   if [[ $parent_abs != "$objective_tree" && $parent_abs != "$objective_tree/"* ]]; then

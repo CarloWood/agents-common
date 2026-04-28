@@ -459,34 +459,35 @@ __aap_resolve_refpath_parent() {
   printf '%s\n' "$parent"
 }
 
+# __aap_insert_position_ok <current_objective_abs> <new_node>
+#
+# Checks whether <new_node> is lexicographically ordered immediately before <current_objective_abs>.
 __aap_insert_position_ok() {
-  local parent="$1"
-  local new_name="$2"
-  local current_name="$3"
+  local current_objective_abs="$1"
+  local new_node="$2"
 
+  local parent_abs
+  parent_abs="$(dirname -- "$current_objective_abs")"
+  local current_name
+  current_name="$(basename -- "current_objective_abs")"
+
+  if [[ ! -d "$current_objective_abs" ]]; then
+    __aap_die "Current objective points to non-existent node."
+    return 1
+  fi
+
+  # Load all currently existing goal names into `names`.
   local names=()
   local child
   while IFS= read -r -d '' child; do
     names+=("$(basename -- "$child")")
   done < <(__aap_list_goal_dirs "$parent")
 
-  local current_found=0
-  local n
-  for n in "${names[@]}"; do
-    if [[ "$n" == "$current_name" ]]; then
-      current_found=1
-      break
-    fi
-  done
-
-  if (( ! current_found )); then
-    __aap_die "Current objective '$current_name' is not a direct child of $(__aap_refpath_of "$parent")."
-    return 1
-  fi
-
+  # Insert `new_name` and return sorted list in array `sorted`.
   local sorted=()
   mapfile -t sorted < <(printf '%s\n' "${names[@]}" "$new_name" | LC_ALL=C sort)
 
+  # Find index of `current_name` in array `sorted`.
   local cur_idx=-1
   local i
   for (( i=0; i<${#sorted[@]}; ++i )); do
@@ -496,12 +497,8 @@ __aap_insert_position_ok() {
     fi
   done
 
-  if (( cur_idx <= 0 )); then
-    __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent")."
-    return 1
-  fi
-
-  if [[ "${sorted[cur_idx-1]}" != "$new_name" ]]; then
+  # Make sure `new_name` was sorted right before it.
+  if [[ $cur_idx -le 0 || "${sorted[cur_idx-1]}" != "$new_name" ]]; then
     __aap_die "New node '$new_name' must sort immediately before '$current_name' under $(__aap_refpath_of "$parent")."
     return 1
   fi
