@@ -64,6 +64,10 @@ Build the current project from the planner-specific build directory.
 
 Only use this when `$REPOROOT` uses CMake.
 
+## `aap-test [<ctest args>...]`
+
+Run tests for `$REPOBASE` in `$BUILDDIR`.
+
 ## `aap-done <ref>`
 
 Mark the current objective as achieved, then update `current_objective` to the
