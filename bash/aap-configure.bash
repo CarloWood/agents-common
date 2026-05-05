@@ -54,9 +54,14 @@ EOF
   if (( ! have_generator )); then
     cmd+=(-G "$generator")
   fi
-  if (( ! have_build_type )); then
+  if [[ -n "$CMAKE_CONFIGURE_OPTIONS_STR" ]]; then
+    readarray -d '|' -t CMAKE_CONFIGURE_OPTIONS < <(printf '%s' "$CMAKE_CONFIGURE_OPTIONS_STR")
+    [[ ${CMAKE_CONFIGURE_OPTIONS[-1]} == "" ]] && unset 'CMAKE_CONFIGURE_OPTIONS[-1]'
+    cmd+=("${CMAKE_CONFIGURE_OPTIONS[@]}")
+  elif (( ! have_build_type )); then
     cmd+=("-DCMAKE_BUILD_TYPE=$build_type")
   fi
+
   cmd+=("$@")
 
   "${cmd[@]}"
