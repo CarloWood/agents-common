@@ -32,7 +32,39 @@ EOF
     exit 0
   fi
 
-  cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}" "$@"
+  local build_type="${AAP_BUILD_TYPE:-Debug}"
+
+  local -a CMAKE_CONFIGURE_OPTIONS=()
+  if [[ -n "${CMAKE_CONFIGURE_OPTIONS_STR:-}" ]]; then
+    readarray -d '|' -t CMAKE_CONFIGURE_OPTIONS < <(printf '%s' "$CMAKE_CONFIGURE_OPTIONS_STR")
+    [[ ${#CMAKE_CONFIGURE_OPTIONS[@]} -gt 0 && ${CMAKE_CONFIGURE_OPTIONS[-1]} == "" ]] && unset 'CMAKE_CONFIGURE_OPTIONS[-1]'
+  fi
+
+  local arg
+  for arg in "${CMAKE_CONFIGURE_OPTIONS[@]}"; do
+    case "$arg" in
+      -DCMAKE_BUILD_TYPE=*)
+        build_type="${arg#-DCMAKE_BUILD_TYPE=}"
+        ;;
+    esac
+  done
+  local have_config=0
+  for arg in "$@"; do
+    case "$arg" in
+      --config|--config=*)
+        have_config=1
+        ;;
+    esac
+  done
+
+  local -a cmd=(cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}")
+  if (( ! have_config )); then
+    cmd+=(--config "$build_type")
+  fi
+
+  cmd+=("$@")
+
+  "${cmd[@]}"
 )
 
 aap-build() {

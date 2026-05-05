@@ -37,31 +37,34 @@ EOF
     exit 0
   fi
 
-  local build_type="${AAP_BUILD_TYPE:-Debug}"
-  local generator="${AAP_GENERATOR:-Ninja}"
+  local -a cmd=(cmake -S "$REPOROOT" -B "$BUILDDIR")
+
+  local -a CMAKE_CONFIGURE_OPTIONS=()
+  if [[ -n "${CMAKE_CONFIGURE_OPTIONS_STR:-}" ]]; then
+    readarray -d '|' -t CMAKE_CONFIGURE_OPTIONS < <(printf '%s' "$CMAKE_CONFIGURE_OPTIONS_STR")
+    [[ ${#CMAKE_CONFIGURE_OPTIONS[@]} -gt 0 && ${CMAKE_CONFIGURE_OPTIONS[-1]} == "" ]] && unset 'CMAKE_CONFIGURE_OPTIONS[-1]'
+  fi
 
   local have_generator=0
   local have_build_type=0
   local arg
-  for arg in "$@"; do
+  for arg in "$@" "${CMAKE_CONFIGURE_OPTIONS[@]}"; do
     case "$arg" in
-      -G|--generator) have_generator=1 ;;
+      -G|--generator|--generator=*) have_generator=1 ;;
       -DCMAKE_BUILD_TYPE=*) have_build_type=1 ;;
     esac
   done
 
-  local -a cmd=(cmake -S "$REPOROOT" -B "$BUILDDIR")
+  local build_type="${AAP_BUILD_TYPE:-Debug}"
+  local generator="${AAP_GENERATOR:-Ninja}"
   if (( ! have_generator )); then
     cmd+=(-G "$generator")
   fi
-  if [[ -n "$CMAKE_CONFIGURE_OPTIONS_STR" ]]; then
-    readarray -d '|' -t CMAKE_CONFIGURE_OPTIONS < <(printf '%s' "$CMAKE_CONFIGURE_OPTIONS_STR")
-    [[ ${CMAKE_CONFIGURE_OPTIONS[-1]} == "" ]] && unset 'CMAKE_CONFIGURE_OPTIONS[-1]'
-    cmd+=("${CMAKE_CONFIGURE_OPTIONS[@]}")
-  elif (( ! have_build_type )); then
+  if (( ! have_build_type )); then
     cmd+=("-DCMAKE_BUILD_TYPE=$build_type")
   fi
 
+  cmd+=("${CMAKE_CONFIGURE_OPTIONS[@]}")
   cmd+=("$@")
 
   "${cmd[@]}"
