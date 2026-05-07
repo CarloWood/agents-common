@@ -1,7 +1,7 @@
 # The implementations of `aap-*` commands are defined in a `set -euo pipefail` subshell.
 # That gives us “strict mode” without running the risk to permanently changing the caller’s environment.
 
-# __aap_ls_impl [OPTIONS]
+# __aap_ls_impl [OPTIONS] [<ref>|<refpath>]
 #
 # If no current_objective exists and --fix is given or the default,
 # then try to find the first not-achieved node if any and create
@@ -40,16 +40,21 @@ __aap_ls_impl() (
   else
     default_fix=" (default)"
   fi
+  local target_ref=""
   while [[ $# -gt 0 ]]; do
     case "$1" in
       --fix) fix=1; shift ;;
       --no-fix) fix=0; shift ;;
       --help|-h)
         cat <<EOF
-usage: aap-ls [--fix|--no-fix] [--help]
+usage: aap-ls [--fix|--no-fix] [--help] [<ref>|<refpath>]
 
 Print an overview of the current plan and (optionally) fix common
 problems to restore invariants.
+
+With <ref> or <refpath>, list the referenced objective and its direct goals,
+then print that objective's description. A <ref> is resolved relative to the
+parent of the current objective; a <refpath> starts with '/'.
 
 Options:
   --fix     Apply fixes${default_fix}.
@@ -58,7 +63,15 @@ Options:
 EOF
         exit 0
         ;;
-      *) echo "aap-ls: unknown argument: $1" >&2; exit 1 ;;
+      --*) echo "aap-ls: unknown argument: $1" >&2; exit 1 ;;
+      *)
+        if [[ -n "$target_ref" ]]; then
+          __aap_die "usage: aap-ls [--fix|--no-fix] [--help] [<ref>|<refpath>]"
+          exit 1
+        fi
+        target_ref="$1"
+        shift
+        ;;
     esac
   done
 
@@ -100,9 +113,13 @@ EOF
   local first_not_achieved_node=""
   first_not_achieved_node="$(__aap_find_first_not_achieved_node "$objective_tree" || true)"
 
+  local objective_tree_abs
+  objective_tree_abs="$(readlink -f -- "$objective_tree")"
+
   # If all nodes are achieved then print all primary nodes with a 'v' in front
-  # and then print '(all goals achieved)' at the end.
-  if [[ -z "$first_not_achieved_node" ]]; then
+  # and then print '(all goals achieved)' at the end, unless a specific target
+  # was requested.
+  if [[ -z "$first_not_achieved_node" && -z "$target_ref" ]]; then
     if (( fix )); then
       rm -f -- "$current_objective_link" 2>/dev/null || true
     fi
@@ -114,9 +131,6 @@ EOF
     printf '(all goals achieved)\n'
     exit 0
   fi
-
-  local objective_tree_abs
-  objective_tree_abs="$(readlink -f -- "$objective_tree")"
 
   local current_node_abs=""
   local current_target_abs=""
@@ -151,7 +165,9 @@ EOF
     fi
   fi
 
-  if [[ -n "$repair_reason" ]]; then
+  if [[ -n "$repair_reason" && -n "$target_ref" ]]; then
+    current_node_abs=""
+  elif [[ -n "$repair_reason" ]]; then
     if (( fix )); then
       ln -snf -- "$(__aap_rel_to_planroot "$first_not_achieved_node")" "$current_objective_link"
       current_node_abs="$(readlink -f -- "$current_objective_link")"
@@ -162,6 +178,40 @@ EOF
         current_node_abs="$first_not_achieved_node"
       fi
     fi
+  fi
+
+  if [[ -n "$target_ref" ]]; then
+    local target_node_abs=""
+    if [[ "$target_ref" == /* ]]; then
+      target_node_abs="$(__aap_resolve_refpath_parent "$objective_tree" "$current_node_abs" "$target_ref")"
+    else
+      if [[ -z "$current_node_abs" || ! -d "$current_node_abs" ]]; then
+        __aap_die "Cannot resolve ref '$target_ref' without a valid current_objective (use an absolute refpath)."
+        exit 1
+      fi
+      target_node_abs="$(__aap_resolve_ref_in_parent "$(dirname -- "$current_node_abs")" "$target_ref")"
+    fi
+
+    printf 'Refpath: %s\n' "$(__aap_refpath_of "$target_node_abs")"
+    while IFS= read -r -d '' child; do
+      local child_name
+      child_name="$(basename -- "$child")"
+      if [[ -n "$current_node_abs" && "$child" == "$current_node_abs" ]]; then
+        if [[ "$(__aap_read_status "$child")" == "achieved" ]]; then
+          __aap_print_achieved " @" "$child_name"
+        else
+          printf '  @ %s\n' "$child_name"
+        fi
+      elif [[ "$(__aap_read_status "$child")" == "achieved" ]]; then
+        __aap_print_achieved "  " "$child_name"
+      else
+        printf '    %s\n' "$child_name"
+      fi
+    done < <(__aap_list_goal_dirs "$target_node_abs")
+
+    printf 'Description:\n'
+    cat -- "$target_node_abs/description"
+    exit 0
   fi
 
   local parent_node_abs
