@@ -563,5 +563,5 @@ __aap_print_achieved() {
 # as indicated by the OPENCODE_IS_USER_COMMAND marker.
 __aap_is_user() {
   local magic=$(echo "${OPENCODE_IS_USER_COMMAND:-}" | md5sum | awk '{ print $1 }')
-  [[ $magic == "9fad39ae375a33ff8d1e9d2a8af3f268" ]]
+  [[ $magic == "8340b1f3f1ede699470861157f18a106" ]]
 }
