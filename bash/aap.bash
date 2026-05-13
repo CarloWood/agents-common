@@ -14,7 +14,7 @@ function __aap_load()
   local command
 
   # Source AAP commands.
-  for file in ls insert previous "done" configure build test; do
+  for file in ls insert previous reset "done" configure build test; do
     source "$PLANROOT/agents-common/bash/aap-$file.bash"
   done
 
