@@ -16,7 +16,7 @@ __aap_insert_impl() (
       --parent)
         shift
         if [[ $# -lt 1 ]]; then
-          __aap_die "usage: aap-insert [--parent <refpath>] <node>"
+          __aap_die "usage: aap-insert [--help] [--parent <refpath>] <node>"
           exit 1
         fi
         parent_refpath="$1"
@@ -41,7 +41,7 @@ EOF
   done
 
   if (( $# != 1 )); then
-    __aap_die "usage: aap-insert [--parent <refpath>] <node>"
+    __aap_die "usage: aap-insert [--help] [--parent <refpath>] <node>"
     exit 1
   fi
 

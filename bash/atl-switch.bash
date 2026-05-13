@@ -49,7 +49,7 @@ EOF
     exit 0
   fi
   if (( $# != 1 )); then
-    __aap_die "usage: atl-switch <refpath>"
+    __aap_die "usage: atl-switch [--help] <refpath>"
     exit 1
   fi
 

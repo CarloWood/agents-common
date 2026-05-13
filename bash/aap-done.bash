@@ -11,7 +11,7 @@ __aap_done_impl() (
   fi
 
   if (( $# != 1 )); then
-    __aap_die "usage: aap-done <ref>"
+    __aap_die "usage: aap-done [--help] <ref>"
     exit 1
   fi
   local ref="$1"

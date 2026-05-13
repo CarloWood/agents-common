@@ -10,7 +10,7 @@ __atl_reset_impl() (
   fi
   if (( $# != 0 )) || [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     cat <<'EOF'
-usage: atl-reset
+usage: atl-reset [--help]
 
 Change the current Topic List to use the current objective node.
 EOF

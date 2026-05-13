@@ -10,7 +10,7 @@ __atl_show_impl() (
   fi
   if (( $# != 0 )) || [[ "${1:-}" == "--help" || "${1:-}" == "-h" ]]; then
     cat <<'EOF'
-usage: atl-show
+usage: atl-show [--help]
 
 Show which plan node holds the current Topic List, as a <refpath>.
 EOF

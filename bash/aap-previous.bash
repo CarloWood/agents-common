@@ -21,7 +21,7 @@ EOF
   fi
 
   if (( $# != 0 )); then
-    __aap_die "usage: aap-previous"
+    __aap_die "usage: aap-previous [--help]"
     exit 1
   fi
 

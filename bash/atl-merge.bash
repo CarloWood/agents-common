@@ -104,7 +104,7 @@ EOF
     exit 0
   fi
   if (( $# != 2 )); then
-    __aap_die "usage: atl-merge <from-refpath> <to-refpath>"
+    __aap_die "usage: atl-merge [--help] <from-refpath> <to-refpath>"
     exit 1
   fi
 

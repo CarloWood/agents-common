@@ -47,7 +47,7 @@ __aap_ls_impl() (
       --no-fix) fix=0; shift ;;
       --help|-h)
         cat <<EOF
-usage: aap-ls [--fix|--no-fix] [--help] [<ref>|<refpath>]
+usage: aap-ls [--fix|--no-fix] [<ref>|<refpath>]
 
 Print an overview of the current plan and (optionally) fix common
 problems to restore invariants.
@@ -66,7 +66,7 @@ EOF
       --*) echo "aap-ls: unknown argument: $1" >&2; exit 1 ;;
       *)
         if [[ -n "$target_ref" ]]; then
-          __aap_die "usage: aap-ls [--fix|--no-fix] [--help] [<ref>|<refpath>]"
+          __aap_die "usage: aap-ls [--help] [--fix|--no-fix] [<ref>|<refpath>]"
           exit 1
         fi
         target_ref="$1"

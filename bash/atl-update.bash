@@ -27,7 +27,7 @@ EOF
   fi
 
   if (( $# != 1 )); then
-    __aap_die "usage: atl-update <text>"
+    __aap_die "usage: atl-update [--help] <text>"
     exit 1
   fi
 
