@@ -82,6 +82,11 @@ Move `current_objective` to the previous node in lexicographic depth-first post-
 Normally this is only used when the user specifically asks to revisit the
 previous objective or goal because it was marked done by mistake.
 
+## `aap-reset <ref>|<refpath>`
+
+Move current_objective to the referenced plan node and set only that node's
+status to not-achieved.
+
 # PLANROOT directory structure
 
 ## Objective/Goal Tree
