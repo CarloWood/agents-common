@@ -63,7 +63,7 @@ EOF
     exit 1
   fi
 
-  if [[ $AICLI_MODE == "coder" ]]; then
+  if [[ $AICLI_MODE != "planner" ]]; then
     local agent="$AICLI_MODE"
     unset AICLI_MODE
     remountctl rw ai-cli "/${REPOBASE}-AAP"
