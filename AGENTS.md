@@ -109,18 +109,20 @@ node.
 
 ## Required contents of every plan node
 
-Every plan node must contain:
+Every plan node shall contain:
 
 - a file named `description`;
-- a file named `status`.
+- a file named `status`;
+- a file named `contents` if any result artifacts are present (see below).
 
 It may also contain:
 
-- child goal directories;
-- other reserved metadata files defined by this specification.
+- child goal directories
+- objective-local result artifacts when the objective is to gather information, make a decision, record an audit, or otherwise produce non-code output.
+  Such artifacts must be regular files in the plan node directory.
+  If any such artifacts exist, the plan node must contain a `contents` file that lists each artifact and briefly describes what it contains.
 
-No unstructured notes or ad hoc files may be placed in a plan node directory
-unless explicitly allowed by this specification.
+No unstructured notes or ad hoc files may be placed in a plan node directory unless explicitly allowed by the user.
 
 ## Meaning of the required files
 
