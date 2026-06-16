@@ -47,7 +47,7 @@ __aap_is_goal_dir() {
 # Print NUL-separated direct child plan-node directories of <node>, sorted lexicographically.
 __aap_list_goal_dirs() {
   local node="$1"
-  find "$node" -mindepth 1 -maxdepth 1 -type d ! -name '.*' -print0 2>/dev/null | LC_ALL=C sort -z
+  find "$node" -mindepth 1 -maxdepth 1 -type d -name '[0-9][0-9]*' -print0 2>/dev/null | LC_ALL=C sort -z
 }
 
 # __aap_node_has_goal_dirs <node>
