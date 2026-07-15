@@ -30,7 +30,7 @@ EOF
     exit 0
   fi
 
-  ctest --test-dir "$BUILDDIR" --quiet --output-on-failure "$@"
+  ctest --test-dir "$BUILDDIR" --quiet --output-on-failure "$@" && echo "Success"
 )
 
 aap-test() {
