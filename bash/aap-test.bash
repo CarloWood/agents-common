@@ -18,19 +18,27 @@ __aap_test_impl() (
     exit 1
   fi
   local ref="${1:-}"
+  local filter=1
+  if [[ "$ref" == "--no-filter" ]]; then
+    filter=0
+  fi
   if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
     cat <<'EOF'
-usage: aap-test [ctest args...]
+usage: aap-test [--help|--no-filter] [ctest args...]
 EOF
     echo "Run tests for $REPOBASE in \$BUILDDIR."
     cat <<'EOF'
-Uses:
-ctest --test-dir "$BUILDDIR" --quiet --output-on-failure
+Uses (without the grep if --no-filter is used):
+ctest --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9])'
 EOF
     exit 0
   fi
 
-  ctest --test-dir "$BUILDDIR" --quiet --output-on-failure "$@" && echo "Success"
+  if [[ $filter == 1 ]]; then
+    ctest --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9])'
+  else
+    ctest --test-dir "$BUILDDIR" --output-on-failure "$@"
+  fi
 )
 
 aap-test() {
