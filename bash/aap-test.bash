@@ -21,6 +21,7 @@ __aap_test_impl() (
   local filter=1
   if [[ "$ref" == "--no-filter" ]]; then
     filter=0
+    shift
   fi
   if [[ "$ref" == "--help" || "$ref" == "-h" ]]; then
     cat <<'EOF'
