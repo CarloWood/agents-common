@@ -25,12 +25,12 @@ EOF
     echo "Run tests for $REPOBASE in \$BUILDDIR."
     cat <<'EOF'
 Uses:
-ctest --test-dir "$BUILDDIR" --output-on-failure
+ctest --test-dir "$BUILDDIR" --quiet --output-on-failure
 EOF
     exit 0
   fi
 
-  ctest --test-dir "$BUILDDIR" --output-on-failure "$@"
+  ctest --test-dir "$BUILDDIR" --quiet --output-on-failure "$@"
 )
 
 aap-test() {
