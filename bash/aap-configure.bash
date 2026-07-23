@@ -17,6 +17,7 @@ __aap_configure_impl() (
     __aap_die "As '$AICLI_MODE' agent, you should never try to run aap-configure! This is a 'coder'-agent only function (although the 'planner' can run it too)."
     exit 1
   fi
+  mkdir -p "$BUILDDIR" 2>/dev/null
   if [[ ! -d "$BUILDDIR" || ! -w "$BUILDDIR" ]]; then
     __aap_die "BUILDDIR is not a writable directory."
     exit 1
