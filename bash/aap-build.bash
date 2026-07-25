@@ -32,8 +32,6 @@ EOF
     exit 0
   fi
 
-  local build_type="${AAP_BUILD_TYPE:-Debug}"
-
   local -a CMAKE_CONFIGURE_OPTIONS=()
   if [[ -n "${CMAKE_CONFIGURE_OPTIONS_STR:-}" ]]; then
     readarray -d '|' -t CMAKE_CONFIGURE_OPTIONS < <(printf '%s' "$CMAKE_CONFIGURE_OPTIONS_STR")
@@ -44,24 +42,21 @@ EOF
   for arg in "${CMAKE_CONFIGURE_OPTIONS[@]}"; do
     case "$arg" in
       -DCMAKE_BUILD_TYPE=*)
-        build_type="${arg#-DCMAKE_BUILD_TYPE=}"
+        __aap_die "Unexcepted -DCMAKE_BUILD_TYPE specified in CMAKE_CONFIGURE_OPTIONS_STR."
+        exit 1
         ;;
     esac
   done
-  local have_config=0
   for arg in "$@"; do
     case "$arg" in
       --config|--config=*)
-        have_config=1
+        __aap_die "Unexcepted --config specified in CMAKE_CONFIGURE_OPTIONS_STR."
+        exit 1
         ;;
     esac
   done
 
-  local -a cmd=(cmake --build "$BUILDDIR" --parallel "${AAP_BUILD_JOBS:-$(nproc)}")
-  if (( ! have_config )); then
-    cmd+=(--config "$build_type")
-  fi
-
+  local -a cmd=(cmake --build "$BUILDDIR" --config "${AAP_BUILD_TYPE:-Debug}" --parallel "${AAP_BUILD_JOBS:-$(nproc)}")
   cmd+=("$@")
 
   "${cmd[@]}"
