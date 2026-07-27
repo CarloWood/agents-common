@@ -36,9 +36,9 @@ EOF
   fi
 
   if [[ $filter == 1 ]]; then
-    ctest --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9]|The following tests did not run:|[[:digit:]][[:digit:]] - ava_.*\(Skipped\))'
+    ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9]|The following tests did not run:|[[:digit:]][[:digit:]] - ava_.*\(Skipped\))'
   else
-    ctest --test-dir "$BUILDDIR" --output-on-failure "$@"
+    ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@"
   fi
 )
 
