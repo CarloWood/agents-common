@@ -36,7 +36,17 @@ EOF
   fi
 
   if [[ $filter == 1 ]]; then
-    ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9]|The following tests did not run:|[[:digit:]][[:digit:]] - ava_.*\(Skipped\))'
+    ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@" | awk '
+      /^[[:space:]]*[0-9]+\/[0-9]+ Test / { next }                 # Per-test progress lines.
+      /^[[:space:]]*Start[[:space:]]+[0-9]/ { next }               # Parallel "Start N:" banners.
+      /^The following tests did not run:/ { next }                 # Skipped-list header.
+      /^[[:space:]]*[0-9]+ - ava_.*\(Skipped\)$/ { next }          # Skipped test entries.
+      /^Label Time Summary:/ { in_labels = 1; next }               # Begin dropping the label block.
+      in_labels { if ($0 ~ /^[[:space:]]*$/) in_labels = 0; next } # Drop label lines + its trailing blank.
+      skip_line { skip_line = 0; next }                            # Skip one line.
+      /^Total Test time/ { skip_line = 1 }                         # Skip the empty line that follows "Total test time...".
+      { print }
+    '
   else
     ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@"
   fi
