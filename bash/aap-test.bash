@@ -29,8 +29,8 @@ usage: aap-test [--help|--no-filter] [ctest args...]
 EOF
     echo "Run tests for $REPOBASE in \$BUILDDIR."
     cat <<'EOF'
-Uses (without the grep if --no-filter is used):
-ctest --test-dir "$BUILDDIR" --output-on-failure "$@" | grep -E -v '^[[:space:]]*([0-9]+/[0-9]+ Test |Start[[:space:]]+[0-9])'
+Uses (without the awk if --no-filter is used):
+ctest --test-dir "$BUILDDIR" --output-on-failure "$@" | awk '..script that only leaves five output lines..'
 EOF
     exit 0
   fi
