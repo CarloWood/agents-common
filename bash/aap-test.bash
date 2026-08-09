@@ -37,6 +37,8 @@ EOF
 
   # ctest cd's into this directory. We need PWD to match the current working directory's logical path.
   export PWD="$BUILDDIR/tests"
+  # This variable points to a host directory, if set. We can't use it.
+  unset AVA_DEBUG_OUTPUT_DIR
   if [[ $filter == 1 ]]; then
     ctest -j8 --test-dir "$BUILDDIR" --output-on-failure "$@" | awk '
       /^[[:space:]]*[0-9]+\/[0-9]+ Test / { next }                 # Per-test progress lines.
