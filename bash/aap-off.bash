@@ -18,6 +18,14 @@ __aap_off_impl() (
     exit 1
   fi
 
+  if [[ $AICLI_MODE != "planner" ]]; then
+    local agent="$AICLI_MODE"
+    unset AICLI_MODE
+    remountctl rw ai-cli "/${REPOBASE}-AAP"
+    trap 'unset AICLI_MODE; remountctl ro ai-cli "/${REPOBASE}-AAP"' EXIT
+    export AICLI_MODE="$agent"
+  fi
+
   touch "$objective_tree/OFF"
 )
 
