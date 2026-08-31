@@ -78,6 +78,11 @@ EOF
   local objective_tree="$PLANROOT/ObjectiveTree"
   local current_objective_link="$PLANROOT/current_objective"
 
+  if [[ -e "$objective_tree/OFF" ]]; then
+    __aap_notice 'The current objective must be ignored. Instead concentrate on what the user is asking.'
+    exit 0
+  fi
+
   if [[ ! -d "$objective_tree" ]]; then
     __aap_notice 'No plan exists yet. Use `aap-insert --parent / <node>` to add the first primary objective.'
     exit 0
